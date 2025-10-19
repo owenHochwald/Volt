@@ -6,6 +6,13 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+type Screen int
+
+const (
+	ScreenList Screen = iota
+	ScreenDetail
+)
+
 type Item struct {
 	title, desc string
 }
@@ -18,7 +25,8 @@ func (i Item) FilterValue() string { return i.title }
 
 type Model struct {
 	requests        list.Model
-	selectedRequest *list.Item
+	selectedRequest *Item
+	currentScreen   Screen
 }
 
 func InitialModel() Model {
@@ -33,6 +41,7 @@ func InitialModel() Model {
 	m := Model{
 		requests:        list.New(items, list.NewDefaultDelegate(), 0, 0),
 		selectedRequest: nil,
+		currentScreen:   ScreenList,
 	}
 	m.requests.Title = "HTTP Methods"
 
