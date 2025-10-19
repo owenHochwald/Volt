@@ -1,1 +1,25 @@
-.idea
+# Binaries
+bin/
+*.exe
+hitt
+
+# Go
+vendor/
+*.mod.sum
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+*.out
+coverage.html
+
+# Local config
+.hitt/
