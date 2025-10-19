@@ -17,9 +17,8 @@ func (i Item) Description() string { return i.desc }
 func (i Item) FilterValue() string { return i.title }
 
 type Model struct {
-	requests list.Model       // different request options
-	cursor   int              // which to-do list item our cursor is pointing at
-	selected map[int]struct{} // which to-do items are selected
+	requests        list.Model
+	selectedRequest *list.Item
 }
 
 func InitialModel() Model {
@@ -32,8 +31,8 @@ func InitialModel() Model {
 	}
 
 	m := Model{
-		requests: list.New(items, list.NewDefaultDelegate(), 0, 0),
-		selected: make(map[int]struct{}),
+		requests:        list.New(items, list.NewDefaultDelegate(), 0, 0),
+		selectedRequest: nil,
 	}
 	m.requests.Title = "HTTP Methods"
 

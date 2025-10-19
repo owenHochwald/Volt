@@ -1,6 +1,8 @@
 package app
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+)
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -8,6 +10,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c":
 			return m, tea.Quit
+		case "enter", " ":
+			current := m.requests.SelectedItem()
+			m.selectedRequest = &current
+
 		}
 	case tea.WindowSizeMsg:
 		h, v := docStyle.GetFrameSize()
