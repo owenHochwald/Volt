@@ -1,26 +1,45 @@
 package app
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	"github.com/charmbracelet/bubbles/list"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+)
+
+type Item struct {
+	title, desc string
+}
+
+var docStyle = lipgloss.NewStyle().Margin(1, 2)
+
+func (i Item) Title() string       { return i.title }
+func (i Item) Description() string { return i.desc }
+func (i Item) FilterValue() string { return i.title }
 
 type Model struct {
-	choices  []string         // different request options
+	requests list.Model       // different request options
 	cursor   int              // which to-do list item our cursor is pointing at
 	selected map[int]struct{} // which to-do items are selected
 }
 
 func InitialModel() Model {
-	return Model{
-		// Our to-do list is a grocery list
-		choices: []string{"GET", "POST", "PUT", "DELETE", "PATCH"},
+	items := []list.Item{
+		Item{title: "GET", desc: "Get a resource"},
+		Item{title: "POST", desc: "Create a resource"},
+		Item{title: "PUT", desc: "Update a resource"},
+		Item{title: "DELETE", desc: "Delete a resource"},
+		Item{title: "PATCH", desc: "Apply partial changes to a resource"},
+	}
 
-		// A map which indicates which choices are selected. We're using
-		// the  map like a mathematical set. The keys refer to the indexes
-		// of the `choices` slice, above.
+	m := Model{
+		requests: list.New(items, list.NewDefaultDelegate(), 0, 0),
 		selected: make(map[int]struct{}),
 	}
+	m.requests.Title = "HTTP Methods"
+
+	return m
 }
 
 func (m Model) Init() tea.Cmd {
-	// Just return `nil`, which means "no I/O right now, please."
 	return nil
 }
