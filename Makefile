@@ -1,6 +1,9 @@
 APP_EXECUTABLE=volt
 
 build:
+	go build -o ${APP_EXECUTABLE} ./cmd/volt/main.go
+
+build-mac:
 	GOARCH=amd64 GOOS=darwin go build -o ${APP_EXECUTABLE} ./cmd/volt/main.go
 
 run: build
@@ -8,4 +11,6 @@ run: build
 
 clean:
 	go clean
-	rm ${APP_EXECUTABLE}
+	rm -f ${APP_EXECUTABLE}
+
+.PHONY: build build-mac run clean
