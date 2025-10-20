@@ -20,7 +20,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.focusedPanel = (m.focusedPanel + 1) % 3
 		case "enter", " ":
 			if m.focusedPanel == SidebarPanel {
-				if i, ok := m.requests.SelectedItem().(Item); ok {
+				if i, ok := m.httpMethods.SelectedItem().(HttpMethod); ok {
 					m.focusedPanel = RequestPanel
 					m.selectedRequest = &i
 				}
@@ -28,11 +28,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
-		m.requests.SetSize(m.width, m.height-15)
+		m.httpMethods.SetSize(m.width/2, (m.height-15)/2)
+		m.requestsList.SetSize(m.width/2, (m.height-15)/2)
 	}
 	if m.focusedPanel == SidebarPanel {
 		var cmd tea.Cmd
-		m.requests, cmd = m.requests.Update(msg)
+		m.httpMethods, cmd = m.httpMethods.Update(msg)
+		m.requestsList, cmd = m.requestsList.Update(msg)
 		return m, cmd
 	}
 	return m, nil

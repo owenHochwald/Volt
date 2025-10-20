@@ -6,6 +6,8 @@ var (
 	focusColor   = lipgloss.Color("205")
 	unfocusColor = lipgloss.Color("240")
 
+	DocStyle = lipgloss.NewStyle().Margin(1, 2)
+
 	// TODO: add parent base style
 	HeaderStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
