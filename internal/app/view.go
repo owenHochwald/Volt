@@ -1,16 +1,25 @@
 package app
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/charmbracelet/lipgloss"
+	"github.com/owenHochwald/volt/internal/ui"
+)
 
 func (m Model) View() string {
-	switch m.currentScreen {
-	case ScreenList:
-		return docStyle.Render(m.requests.View())
-	case ScreenDetail:
-		return m.detailView()
-	default:
-		return docStyle.Render(m.requests.View())
-	}
+	sidebarWidth := 20
+	mainWidth := m.width - sidebarWidth - 4
+
+	sidebar := ui.SidebarStyle.Width(sidebarWidth).
+		Height(m.height - 2).
+		Render(m.requests.View())
+
+	main := ui.MainStyle.
+		Width(mainWidth).
+		Height(m.height - 2).
+		Render(m.detailView())
+	return lipgloss.JoinHorizontal(lipgloss.Top, sidebar, main)
 }
 
 func (m Model) detailView() string {

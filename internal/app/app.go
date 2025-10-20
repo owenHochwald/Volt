@@ -27,6 +27,8 @@ type Model struct {
 	requests        list.Model
 	selectedRequest *Item
 	currentScreen   Screen
+
+	width, height int
 }
 
 func InitialModel() Model {

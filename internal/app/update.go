@@ -25,8 +25,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	case tea.WindowSizeMsg:
-		h, v := docStyle.GetFrameSize()
-		m.requests.SetSize(msg.Width-h, msg.Height-v)
+		m.width, m.height = msg.Width, msg.Height
+		m.requests.SetSize(m.width, m.height-15)
 	}
 	if m.currentScreen == ScreenList {
 		var cmd tea.Cmd
