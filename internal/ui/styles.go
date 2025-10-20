@@ -3,6 +3,9 @@ package ui
 import "github.com/charmbracelet/lipgloss"
 
 var (
+	focusColor   = lipgloss.Color("205")
+	unfocusColor = lipgloss.Color("240")
+
 	// TODO: add parent base style
 	HeaderStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
@@ -21,11 +24,13 @@ var (
 	ResponseStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("65"))
-
-	FocusedStyle = lipgloss.NewStyle().
-			BorderForeground(lipgloss.Color("205")).
-			Bold(true)
-
-	UnfocusedStyle = lipgloss.NewStyle().
-			BorderForeground(lipgloss.Color("240"))
 )
+
+func ApplyFocus(style lipgloss.Style, focus bool) lipgloss.Style {
+	if focus {
+		return style.
+			BorderForeground(focusColor).
+			Bold(true)
+	}
+	return style.BorderForeground(unfocusColor)
+}
