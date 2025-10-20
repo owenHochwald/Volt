@@ -11,15 +11,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		case "esc":
-			if m.currentScreen == ScreenDetail {
-				m.currentScreen = ScreenList
+			if m.focusedPanel == RequestPanel {
+				m.focusedPanel = SidebarPanel
 				m.selectedRequest = nil
 				return m, nil
 			}
 		case "enter", " ":
-			if m.currentScreen == ScreenList {
+			if m.focusedPanel == SidebarPanel {
 				if i, ok := m.requests.SelectedItem().(Item); ok {
-					m.currentScreen = ScreenDetail
+					m.focusedPanel = RequestPanel
 					m.selectedRequest = &i
 				}
 			}
@@ -28,7 +28,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width, m.height = msg.Width, msg.Height
 		m.requests.SetSize(m.width, m.height-15)
 	}
-	if m.currentScreen == ScreenList {
+	if m.focusedPanel == SidebarPanel {
 		var cmd tea.Cmd
 		m.requests, cmd = m.requests.Update(msg)
 		return m, cmd

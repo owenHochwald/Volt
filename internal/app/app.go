@@ -6,11 +6,12 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-type Screen int
+type Panel int
 
 const (
-	ScreenList Screen = iota
-	ScreenDetail
+	SidebarPanel Panel = iota
+	RequestPanel
+	ResponsePanel
 )
 
 type Item struct {
@@ -26,7 +27,8 @@ func (i Item) FilterValue() string { return i.title }
 type Model struct {
 	requests        list.Model
 	selectedRequest *Item
-	currentScreen   Screen
+
+	focusedPanel Panel
 
 	width, height int
 }
@@ -43,7 +45,7 @@ func InitialModel() Model {
 	m := Model{
 		requests:        list.New(items, list.NewDefaultDelegate(), 0, 0),
 		selectedRequest: nil,
-		currentScreen:   ScreenList,
+		focusedPanel:    SidebarPanel,
 	}
 	m.requests.Title = "HTTP Methods"
 
