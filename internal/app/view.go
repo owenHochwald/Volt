@@ -26,7 +26,7 @@ func (m Model) View() string {
 
 	request := ui.RequestStyle.Width(mainWidth - 10).
 		Height(requestHeight).
-		Render("Request editor")
+		Render(m.requestView())
 
 	response := ui.ResponseStyle.Width(mainWidth - 10).
 		Height(responseHeight).
@@ -37,12 +37,13 @@ func (m Model) View() string {
 	return lipgloss.JoinVertical(lipgloss.Top, header, bottomPanels)
 }
 
-func (m Model) detailView() string {
+func (m Model) requestView() string {
+
 	if m.selectedRequest == nil {
 		return "No item selected"
 	}
-
-	s := fmt.Sprintf("HTTP Method: %s\n\n", m.selectedRequest.title)
+	s := "REQUEST SECTION\n"
+	s += fmt.Sprintf("HTTP Method: %s\n\n", m.selectedRequest.title)
 	s += fmt.Sprintf("Description: %s\n\n", m.selectedRequest.desc)
 	s += "---\n\n"
 	s += "URL: [              ]\n"
