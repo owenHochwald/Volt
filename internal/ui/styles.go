@@ -3,6 +3,7 @@ package ui
 import "github.com/charmbracelet/lipgloss"
 
 var (
+	// TODO: add parent base style
 	HeaderStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			Height(2).
@@ -20,4 +21,11 @@ var (
 	ResponseStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("65"))
+
+	FocusedStyle = lipgloss.NewStyle().
+			BorderForeground(lipgloss.Color("205")).
+			Bold(true)
+
+	UnfocusedStyle = lipgloss.NewStyle().
+			BorderForeground(lipgloss.Color("240"))
 )

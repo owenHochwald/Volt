@@ -16,6 +16,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.selectedRequest = nil
 				return m, nil
 			}
+		case "tab":
+			m.focusedPanel = (m.focusedPanel + 1) % 3
 		case "enter", " ":
 			if m.focusedPanel == SidebarPanel {
 				if i, ok := m.requests.SelectedItem().(Item); ok {

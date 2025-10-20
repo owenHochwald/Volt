@@ -34,6 +34,7 @@ type Model struct {
 }
 
 func InitialModel() Model {
+	// TODO: Use these for new request creation: Only show saved reqs in sidebar
 	items := []list.Item{
 		Item{title: "GET", desc: "Get a resource"},
 		Item{title: "POST", desc: "Create a resource"},
