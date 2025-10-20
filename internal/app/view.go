@@ -9,14 +9,19 @@ import (
 
 func (m Model) View() string {
 	sidebarWidth := 20
+	contentHeight := m.height - 5
+
 	mainWidth := m.width - sidebarWidth - 4
-	mainHeight := m.height - 2
+	mainHeight := contentHeight - 2
 
 	requestHeight := int(float64(mainHeight) / 2.2)
 	responseHeight := int(float64(mainHeight) / 2.2)
 
+	header := ui.HeaderStyle.Width(m.width).
+		Render("Volt - TUI HTTP Client - v0.1 [?] Help  [q] Quit")
+
 	sidebar := ui.SidebarStyle.Width(sidebarWidth).
-		Height(m.height - 2).
+		Height(contentHeight - 2).
 		Render(m.requests.View())
 
 	request := ui.RequestStyle.Width(mainWidth - 10).
@@ -27,12 +32,9 @@ func (m Model) View() string {
 		Height(responseHeight).
 		Render("Response editor")
 
-	//main := ui.MainStyle.
-	//	Width(mainWidth).
-	//	Height(m.height - 2).
-	//	Render(m.detailView())
 	rightSide := lipgloss.JoinVertical(lipgloss.Right, request, response)
-	return lipgloss.JoinHorizontal(lipgloss.Top, sidebar, rightSide)
+	bottomPanels := lipgloss.JoinHorizontal(lipgloss.Top, sidebar, rightSide)
+	return lipgloss.JoinVertical(lipgloss.Top, header, bottomPanels)
 }
 
 func (m Model) detailView() string {
