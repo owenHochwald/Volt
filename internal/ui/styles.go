@@ -7,7 +7,16 @@ var (
 			Border(lipgloss.RoundedBorder()).
 			Width(20).
 			BorderForeground(lipgloss.Color("62"))
+
 	MainStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("63"))
+
+	RequestStyle = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("64"))
+
+	ResponseStyle = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("65"))
 )

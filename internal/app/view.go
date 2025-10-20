@@ -10,16 +10,29 @@ import (
 func (m Model) View() string {
 	sidebarWidth := 20
 	mainWidth := m.width - sidebarWidth - 4
+	mainHeight := m.height - 2
+
+	requestHeight := int(float64(mainHeight) / 2.2)
+	responseHeight := int(float64(mainHeight) / 2.2)
 
 	sidebar := ui.SidebarStyle.Width(sidebarWidth).
 		Height(m.height - 2).
 		Render(m.requests.View())
 
-	main := ui.MainStyle.
-		Width(mainWidth).
-		Height(m.height - 2).
-		Render(m.detailView())
-	return lipgloss.JoinHorizontal(lipgloss.Top, sidebar, main)
+	request := ui.RequestStyle.Width(mainWidth - 10).
+		Height(requestHeight).
+		Render("Request editor")
+
+	response := ui.ResponseStyle.Width(mainWidth - 10).
+		Height(responseHeight).
+		Render("Response editor")
+
+	//main := ui.MainStyle.
+	//	Width(mainWidth).
+	//	Height(m.height - 2).
+	//	Render(m.detailView())
+	rightSide := lipgloss.JoinVertical(lipgloss.Right, request, response)
+	return lipgloss.JoinHorizontal(lipgloss.Top, sidebar, rightSide)
 }
 
 func (m Model) detailView() string {
