@@ -20,7 +20,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.focusedPanel = (m.focusedPanel + 1) % 3
 		case "enter", " ":
 			if m.focusedPanel == SidebarPanel {
-				if i, ok := m.httpMethods.SelectedItem().(HttpMethod); ok {
+				if i, ok := m.requestsList.SelectedItem().(RequestItem); ok {
 					m.focusedPanel = RequestPanel
 					m.selectedRequest = &i
 				}
