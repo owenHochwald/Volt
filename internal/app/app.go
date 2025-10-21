@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/owenHochwald/volt/internal/http"
@@ -34,7 +35,7 @@ type Model struct {
 	httpMethods  list.Model
 	requestsList list.Model
 
-	selectedRequest *HttpMethod
+	selectedRequest *RequestItem
 
 	// SQLite State
 	savedRequests []http.Request
@@ -68,7 +69,34 @@ func InitialModel() Model {
 	}
 	m.httpMethods.Title = "HTTP Methods"
 	m.requestsList.Title = "Saved Requests"
+	customKeys := newCustomReqKeys()
+	m.requestsList.AdditionalShortHelpKeys = func() []key.Binding {
+		return []key.Binding{
+			customKeys.newItem,
+			customKeys.delete,
+		}
+	}
 	return m
+
+}
+
+type customReqKeys struct {
+	newItem key.Binding
+	delete  key.Binding
+}
+
+func newCustomReqKeys() customReqKeys {
+	return customReqKeys{
+		newItem: key.NewBinding(
+			key.WithKeys("n"),
+			key.WithHelp("n", "Create new request"),
+		),
+		delete: key.NewBinding(
+			key.WithKeys("d"),
+			key.WithHelp("d", "Delete selected request"),
+		),
+	}
+
 }
 
 func (m Model) Init() tea.Cmd {
