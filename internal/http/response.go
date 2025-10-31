@@ -1,10 +1,10 @@
 package http
 
 type Response struct {
-	StatusCode int
-	Status     string
-	Headers    map[string]string
-	Body       string
-	Duration   int64
-	Error      error
+	StatusCode int               `json:"status_code"`
+	Status     string            `json:"status,omitempty"`
+	Headers    map[string]string `json:"headers,omitempty"`
+	Body       string            `json:"body,omitempty"`
+	Duration   int64             `json:"duration,omitempty"`
+	Error      string            `json:"error,omitempty"`
 }
