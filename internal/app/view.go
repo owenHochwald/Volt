@@ -20,15 +20,15 @@ func (m Model) View() string {
 	header := ui.HeaderStyle.Width(m.width).
 		Render("Volt - TUI HTTP Client - v0.1 [?] Help  [q] Quit")
 
-	sidebar := ui.SidebarStyle.Width(sidebarWidth).
-		Height(contentHeight - 2).
-		Render(m.requests.View())
+	sidebar := ui.ApplyFocus(ui.SidebarStyle, m.focusedPanel == 0).Width(sidebarWidth).
+		Height(mainHeight - 4).
+		Render(m.requestsList.View())
 
-	request := ui.RequestStyle.Width(mainWidth - 10).
+	request := ui.ApplyFocus(ui.RequestStyle, m.focusedPanel == 1).Width(mainWidth - 10).
 		Height(requestHeight).
 		Render(m.requestView())
 
-	response := ui.ResponseStyle.Width(mainWidth - 10).
+	response := ui.ApplyFocus(ui.ResponseStyle, m.focusedPanel == 2).Width(mainWidth - 10).
 		Height(responseHeight).
 		Render("Response editor")
 
@@ -51,5 +51,5 @@ func (m Model) requestView() string {
 	s += "Body: [             ]\n\n"
 	s += "Press ESC to go back"
 
-	return docStyle.Render(s)
+	return ui.DocStyle.Render(s)
 }
