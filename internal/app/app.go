@@ -1,6 +1,8 @@
 package app
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -57,8 +59,8 @@ func InitialModel() Model {
 
 	mockRequestsList := []list.Item{
 		RequestItem{title: "Get Users", desc: "test"},
-		RequestItem{title: "Delete all Users", desc: "test"},
-		RequestItem{title: "Update a Single User", desc: "test"},
+		RequestItem{title: "Delete a User", desc: "test"},
+		RequestItem{title: "Update a User", desc: "test"},
 	}
 
 	m := Model{
@@ -67,8 +69,13 @@ func InitialModel() Model {
 		selectedRequest: nil,
 		focusedPanel:    SidebarPanel,
 	}
+	InitialSidebar(&m)
+	return m
+}
+
+func InitialSidebar(m *Model) {
 	m.httpMethods.Title = "HTTP Methods"
-	m.requestsList.Title = "Saved Requests"
+	m.requestsList.Title = fmt.Sprintf("Saved (%d)", len(m.requestsList.Items()))
 	customKeys := newCustomReqKeys()
 	m.requestsList.AdditionalShortHelpKeys = func() []key.Binding {
 		return []key.Binding{
@@ -76,8 +83,8 @@ func InitialModel() Model {
 			customKeys.delete,
 		}
 	}
-	return m
 
+	m.requestsList.SetShowHelp(true)
 }
 
 type customReqKeys struct {
@@ -89,11 +96,11 @@ func newCustomReqKeys() customReqKeys {
 	return customReqKeys{
 		newItem: key.NewBinding(
 			key.WithKeys("n"),
-			key.WithHelp("n", "Create new request"),
+			key.WithHelp("n", "new request"),
 		),
 		delete: key.NewBinding(
 			key.WithKeys("d"),
-			key.WithHelp("d", "Delete selected request"),
+			key.WithHelp("d", "delete request"),
 		),
 	}
 
