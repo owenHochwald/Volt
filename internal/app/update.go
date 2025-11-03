@@ -2,9 +2,12 @@ package app
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/owenHochwald/volt/internal/ui"
 )
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -36,6 +39,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.httpMethods, cmd = m.httpMethods.Update(msg)
 		m.requestsList, cmd = m.requestsList.Update(msg)
 		return m, cmd
+	} else if m.focusedPanel == RequestPanel {
+		// use request pane update
+		m.requestPane.SetFocused(true)
+		var requestPaneModel tea.Model
+		requestPaneModel, cmd = m.requestPane.Update(msg)
+		m.requestPane = requestPaneModel.(ui.RequestPane)
+		return m, cmd
 	}
-	return m, nil
+	return m, cmd
 }

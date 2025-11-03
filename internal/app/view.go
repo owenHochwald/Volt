@@ -1,8 +1,6 @@
 package app
 
 import (
-	"fmt"
-
 	"github.com/charmbracelet/lipgloss"
 	"github.com/owenHochwald/volt/internal/ui"
 )
@@ -38,18 +36,7 @@ func (m Model) View() string {
 }
 
 func (m Model) requestView() string {
+	m.requestPane.SetFocused(m.focusedPanel == RequestPanel)
 
-	if m.selectedRequest == nil {
-		return "No item selected"
-	}
-	s := "REQUEST SECTION\n"
-	s += fmt.Sprintf("HTTP Method: %s\n\n", m.selectedRequest.title)
-	s += fmt.Sprintf("Description: %s\n\n", m.selectedRequest.desc)
-	s += "---\n\n"
-	s += "URL: [              ]\n"
-	s += "Headers: [          ]\n"
-	s += "Body: [             ]\n\n"
-	s += "Press ESC to go back"
-
-	return ui.DocStyle.Render(s)
+	return m.requestPane.View()
 }
