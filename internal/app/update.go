@@ -10,18 +10,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		switch msg.Type {
+		case tea.KeyShiftTab:
+			m.focusedPanel = (m.focusedPanel + 1) % 3
+		default:
+		}
 		switch msg.String() {
-		case "ctrl+c", "q":
+		case tea.KeyCtrlC.String(), "q":
 			return m, tea.Quit
-		case "esc":
+		case tea.KeyEscape.String():
 			if m.focusedPanel == RequestPanel {
 				m.focusedPanel = SidebarPanel
 				m.selectedRequest = nil
 				return m, nil
 			}
-		case "tab":
-			m.focusedPanel = (m.focusedPanel + 1) % 3
-		case "enter", " ":
+		case tea.KeyEnter.String(), " ":
 			if m.focusedPanel == SidebarPanel {
 				if i, ok := m.requestsList.SelectedItem().(RequestItem); ok {
 					m.focusedPanel = RequestPanel
