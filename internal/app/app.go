@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/owenHochwald/volt/internal/http"
+	"github.com/owenHochwald/volt/internal/ui"
 )
 
 type Panel int
@@ -37,6 +38,8 @@ type Model struct {
 	httpMethods  list.Model
 	requestsList list.Model
 
+	requestPane ui.RequestPane
+
 	selectedRequest *RequestItem
 
 	// SQLite State
@@ -66,6 +69,7 @@ func InitialModel() Model {
 	m := Model{
 		httpMethods:     list.New(items, list.NewDefaultDelegate(), 0, 0),
 		requestsList:    list.New(mockRequestsList, list.NewDefaultDelegate(), 0, 0),
+		requestPane:     ui.SetupRequestPane(),
 		selectedRequest: nil,
 		focusedPanel:    SidebarPanel,
 	}
@@ -103,7 +107,6 @@ func newCustomReqKeys() customReqKeys {
 			key.WithHelp("d", "delete request"),
 		),
 	}
-
 }
 
 func (m Model) Init() tea.Cmd {

@@ -6,27 +6,27 @@ import (
 )
 
 const (
-	GET     = "GET"
-	HEAD    = "HEAD"
-	POST    = "POST"
-	PUT     = "PUT"
-	DELETE  = "DELETE"
-	CONNECT = "CONNECT"
-	PATCH   = "PATCH"
-	OPTIONS = "OPTIONS"
-	TRACE   = "TRACE"
+	GET = "GET"
+	//HEAD   = "HEAD"
+	POST   = "POST"
+	PUT    = "PUT"
+	DELETE = "DELETE"
+	//CONNECT = "CONNECT"
+	//PATCH   = "PATCH"
+	//OPTIONS = "OPTIONS"
+	//TRACE   = "TRACE"
 )
 
 var validMethods = []string{
 	GET,
-	HEAD,
+	//HEAD,
 	POST,
 	PUT,
 	DELETE,
-	CONNECT,
-	PATCH,
-	OPTIONS,
-	TRACE,
+	//CONNECT,
+	//PATCH,
+	//OPTIONS,
+	//TRACE,
 }
 
 type Request struct {
