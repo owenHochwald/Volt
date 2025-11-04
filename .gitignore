@@ -2,6 +2,7 @@
 bin/
 *.exe
 hitt
+volt
 
 # Go
 vendor/
