@@ -2,6 +2,8 @@ package utils
 
 import "strings"
 
+// TODO: add allow keyword support for headers
+
 func ParseKeyValuePairs(input string) (map[string]string, []string) {
 	result := make(map[string]string)
 	var errors []string

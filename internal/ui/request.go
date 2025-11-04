@@ -51,6 +51,8 @@ type RequestPane struct {
 
 	height int
 
+	parseErrors []string
+
 	headersExpanded bool
 	headers         textarea.Model
 	//headers         []HeaderPair
@@ -65,18 +67,17 @@ func (m *RequestPane) syncRequest() {
 	m.request.URL = m.urlInput.Value()
 	m.request.Name = m.nameInput.Value()
 	// TODO: add parsing for headers and body
-	// header parsing
-	headerMap, _ := utils.ParseKeyValuePairs(m.headers.Value())
-	//body parsing
-	bodyMap, _ := utils.ParseKeyValuePairs(m.body.Value())
+	headerMap, headerErrors := utils.ParseKeyValuePairs(m.headers.Value())
+	bodyMap, bodyErrors := utils.ParseKeyValuePairs(m.body.Value())
 	jsonData, err := json.Marshal(bodyMap)
 	if err != nil {
 		// TODO: add standard error handling logic
+		m.parseErrors = append(m.parseErrors, "JSON marshal error: "+err.Error())
 		return
 	}
 	m.request.Headers = headerMap
 	m.request.Body = string(jsonData)
-
+	m.parseErrors = append(headerErrors, bodyErrors...)
 }
 
 func (m RequestPane) Init() tea.Cmd {
