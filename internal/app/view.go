@@ -12,7 +12,7 @@ func (m Model) View() string {
 	mainWidth := m.width - sidebarWidth - 4
 	mainHeight := contentHeight - 2
 
-	requestHeight := int(float64(mainHeight) / 2.2)
+	requestHeight := int(float64(mainHeight)/2.2) - 9
 	responseHeight := int(float64(mainHeight) / 2.2)
 
 	header := ui.HeaderStyle.Width(m.width).

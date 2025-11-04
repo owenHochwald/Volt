@@ -1,45 +1,40 @@
 package ui
 
 import (
+	"encoding/json"
+
+	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/owenHochwald/volt/internal/http"
+	"github.com/owenHochwald/volt/internal/utils"
 )
 
 const (
-	maxFocusIndex = 3
+	maxFocusIndex = 5
 
 	focusMethod = iota - 1
 	focusURL
 	focusName
+	focusHeaders
+	focusBody
 	focusSubmit
 )
 
 var (
-	// HTTP Method Styles - Minimalistic, color-coded badges
 	methodStyleBase = lipgloss.NewStyle().
 			Padding(0, 1).
 			Bold(true)
 
-	// Color-coded by HTTP method semantics (no borders for minimalism)
 	getMethodStyle    = methodStyleBase.Foreground(lipgloss.Color("42"))  // Green
 	postMethodStyle   = methodStyleBase.Foreground(lipgloss.Color("214")) // Orange
 	putMethodStyle    = methodStyleBase.Foreground(lipgloss.Color("117")) // Blue
 	patchMethodStyle  = methodStyleBase.Foreground(lipgloss.Color("141")) // Purple
 	deleteMethodStyle = methodStyleBase.Foreground(lipgloss.Color("196")) // Red
 
-	// Label styles - Very subtle
 	labelStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("241"))
-
-	// Submit button - Minimal, just text with color change
-	submitButtonFocused = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("205")).
-				Bold(true)
-
-	submitButtonBlurred = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("240"))
 )
 
 type RequestPane struct {
@@ -54,14 +49,16 @@ type RequestPane struct {
 
 	request *http.Request
 
-	height int // allocated height for the pane
+	height int
 
-	// MISSING: Consider adding these fields for future features:
-	// headersExpanded bool
-	// headers         []HeaderPair
+	parseErrors []string
+
+	headersExpanded bool
+	headers         textarea.Model
+	//headers         []HeaderPair
 	// queryParams     []QueryParam
-	// bodyExpanded    bool
-	// bodyInput       textarea.Model
+	bodyExpanded bool
+	body         textarea.Model
 	// validationError error
 }
 
@@ -69,6 +66,18 @@ func (m *RequestPane) syncRequest() {
 	m.request.Method = m.methods[m.currentMethod]
 	m.request.URL = m.urlInput.Value()
 	m.request.Name = m.nameInput.Value()
+	// TODO: add parsing for headers and body
+	headerMap, headerErrors := utils.ParseKeyValuePairs(m.headers.Value())
+	bodyMap, bodyErrors := utils.ParseKeyValuePairs(m.body.Value())
+	jsonData, err := json.Marshal(bodyMap)
+	if err != nil {
+		// TODO: add standard error handling logic
+		m.parseErrors = append(m.parseErrors, "JSON marshal error: "+err.Error())
+		return
+	}
+	m.request.Headers = headerMap
+	m.request.Body = string(jsonData)
+	m.parseErrors = append(headerErrors, bodyErrors...)
 }
 
 func (m RequestPane) Init() tea.Cmd {
@@ -95,6 +104,10 @@ func (m *RequestPane) blurCurrentComponent() {
 		m.urlInput.Blur()
 	case focusName:
 		m.nameInput.Blur()
+	case focusHeaders:
+		m.headers.Blur()
+	case focusBody:
+		m.body.Blur()
 	default:
 	}
 }
@@ -107,6 +120,10 @@ func (m *RequestPane) focusCurrentComponent() {
 		m.urlInput.Focus()
 	case focusName:
 		m.nameInput.Focus()
+	case focusHeaders:
+		m.headers.Focus()
+	case focusBody:
+		m.body.Focus()
 	default:
 	}
 }
@@ -157,6 +174,14 @@ func (m RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			var cmd tea.Cmd
 			m.nameInput, cmd = m.nameInput.Update(msg)
 			return m, cmd
+		case focusHeaders:
+			var cmd tea.Cmd
+			m.headers, cmd = m.headers.Update(msg)
+			return m, cmd
+		case focusBody:
+			var cmd tea.Cmd
+			m.headers, cmd = m.headers.Update(msg)
+			return m, cmd
 		case focusSubmit:
 			switch msg.String() {
 			case tea.KeyEnter.String():
@@ -165,11 +190,8 @@ func (m RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 		default:
-
 			return m, nil
-
 		}
-
 	}
 
 	m.syncRequest()
@@ -204,11 +226,17 @@ func (m RequestPane) View() string {
 	nameLabel := labelStyle.Render("Name ")
 	nameLine := lipgloss.JoinHorizontal(lipgloss.Left, nameLabel, m.nameInput.View())
 
+	headersLabel := labelStyle.Render("Headers ")
+	headersLine := lipgloss.JoinHorizontal(lipgloss.Left, headersLabel, m.headers.View())
+
+	bodyLabel := labelStyle.Render("Body    ")
+	bodyLine := lipgloss.JoinHorizontal(lipgloss.Left, bodyLabel, m.body.View())
+
 	var button string
 	if m.focusComponentIndex == focusSubmit {
-		button = submitButtonFocused.Render("→ Send")
+		button = FocusedButton.Render("→ Send")
 	} else {
-		button = submitButtonBlurred.Render("→ Send")
+		button = UnfocusedButton.Render("→ Send")
 	}
 
 	mainContent := lipgloss.JoinVertical(
@@ -216,27 +244,21 @@ func (m RequestPane) View() string {
 		"",
 		primaryLine,
 		nameLine,
+		headersLine,
+		bodyLine,
 		"",
 		button,
 	)
 
 	helpText := HelpStyle.Render("tab/↑/↓: navigate • ←/→ or h/l: change method • enter: send • q: quit")
 
-	if m.height > 0 {
-		return lipgloss.JoinVertical(
-			lipgloss.Left,
-			mainContent,
-			lipgloss.NewStyle().Height(m.height-7).Render(""),
-			helpText,
-		)
-	}
-
-	// Fallback without height
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		mainContent,
+		lipgloss.NewStyle().Height(m.height-10).Render(""),
 		helpText,
 	)
+
 }
 
 func SetupRequestPane() RequestPane {
@@ -253,11 +275,19 @@ func SetupRequestPane() RequestPane {
 		currentMethod:       0,
 		panelFocused:        false,
 		focusComponentIndex: focusMethod,
-		request:             http.NewDefaultRequest(),
+
+		headers:         textarea.New(),
+		headersExpanded: false,
+
+		body:         textarea.New(),
+		bodyExpanded: false,
+
+		request: http.NewDefaultRequest(),
 	}
 
 	m.urlInput = textinput.New()
-	m.urlInput.Placeholder = "http://localhost:"
+	//m.urlInput.Placeholder = "http://localhost:..."
+	m.urlInput.SetValue("http://localhost:")
 	m.urlInput.CharLimit = 40
 	m.urlInput.Width = 60
 
@@ -266,5 +296,8 @@ func SetupRequestPane() RequestPane {
 	m.nameInput.CharLimit = 40
 	m.nameInput.Width = 60
 
+	m.headers.Placeholder = "Content-Type = multipart/form-data,\nAuthorization= Bearer ...,"
+
+	m.body.Placeholder = "key = value,\nname = volt,\nversion=1.0"
 	return m
 }
