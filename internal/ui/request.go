@@ -54,6 +54,8 @@ type RequestPane struct {
 
 	request *http.Request
 
+	height int // allocated height for the pane
+
 	// MISSING: Consider adding these fields for future features:
 	// headersExpanded bool
 	// headers         []HeaderPair
@@ -75,6 +77,10 @@ func (m RequestPane) Init() tea.Cmd {
 
 func (m *RequestPane) SetFocused(focused bool) {
 	m.panelFocused = focused
+}
+
+func (m *RequestPane) SetHeight(height int) {
+	m.height = height
 }
 
 func (m *RequestPane) GetCurrentMethod() string {
@@ -205,15 +211,30 @@ func (m RequestPane) View() string {
 		button = submitButtonBlurred.Render("→ Send")
 	}
 
-	helpText := HelpStyle.Render("tab/↑/↓: navigate • ←/→ or h/l: change method • enter: send • q: quit")
-
-	return lipgloss.JoinVertical(
+	mainContent := lipgloss.JoinVertical(
 		lipgloss.Left,
 		"",
 		primaryLine,
 		nameLine,
 		"",
 		button,
+	)
+
+	helpText := HelpStyle.Render("tab/↑/↓: navigate • ←/→ or h/l: change method • enter: send • q: quit")
+
+	if m.height > 0 {
+		return lipgloss.JoinVertical(
+			lipgloss.Left,
+			mainContent,
+			lipgloss.NewStyle().Height(m.height-7).Render(""),
+			helpText,
+		)
+	}
+
+	// Fallback without height
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		mainContent,
 		helpText,
 	)
 }

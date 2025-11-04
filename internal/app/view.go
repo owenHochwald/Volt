@@ -18,13 +18,11 @@ func (m Model) View() string {
 	header := ui.HeaderStyle.Width(m.width).
 		Render("Volt - TUI HTTP Client - v0.1 [?] Help  [q] Quit")
 
-	sidebar := ui.ApplyFocus(ui.SidebarStyle, m.focusedPanel == 0).Width(sidebarWidth).
-		Height(mainHeight - 4).
-		Render(m.requestsList.View())
+	sidebar := m.sidebarView(mainHeight, sidebarWidth)
 
 	request := ui.ApplyFocus(ui.RequestStyle, m.focusedPanel == 1).Width(mainWidth - 10).
 		Height(requestHeight).
-		Render(m.requestView())
+		Render(m.requestView(requestHeight))
 
 	response := ui.ApplyFocus(ui.ResponseStyle, m.focusedPanel == 2).Width(mainWidth - 10).
 		Height(responseHeight).
@@ -35,8 +33,16 @@ func (m Model) View() string {
 	return lipgloss.JoinVertical(lipgloss.Top, header, bottomPanels)
 }
 
-func (m Model) requestView() string {
+func (m Model) sidebarView(height, width int) string {
+	sidebar := ui.ApplyFocus(ui.SidebarStyle, m.focusedPanel == 0).Width(width).
+		Height(height - 4).
+		Render(m.requestsList.View())
+	return sidebar
+}
+
+func (m Model) requestView(height int) string {
 	m.requestPane.SetFocused(m.focusedPanel == RequestPanel)
+	m.requestPane.SetHeight(height)
 
 	return m.requestPane.View()
 }
