@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"strings"
-
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -10,56 +8,51 @@ import (
 )
 
 const (
-	focusMethod = iota
+	maxFocusIndex = 3
+
+	focusMethod = iota - 1
 	focusURL
 	focusName
 	focusSubmit
 )
 
-var methodStyle = lipgloss.NewStyle().
-	Padding(0, 1).
-	Border(lipgloss.NormalBorder()).
-	BorderForeground(lipgloss.Color("63"))
+var (
+	// HTTP Method Styles - Minimalistic, color-coded badges
+	methodStyleBase = lipgloss.NewStyle().
+			Padding(0, 1).
+			Bold(true)
+
+	// Color-coded by HTTP method semantics (no borders for minimalism)
+	getMethodStyle    = methodStyleBase.Foreground(lipgloss.Color("42"))  // Green
+	postMethodStyle   = methodStyleBase.Foreground(lipgloss.Color("214")) // Orange
+	putMethodStyle    = methodStyleBase.Foreground(lipgloss.Color("117")) // Blue
+	patchMethodStyle  = methodStyleBase.Foreground(lipgloss.Color("141")) // Purple
+	deleteMethodStyle = methodStyleBase.Foreground(lipgloss.Color("196")) // Red
+
+	// Label styles - Very subtle
+	labelStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("241"))
+
+	// Submit button - Minimal, just text with color change
+	submitButtonFocused = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("205")).
+				Bold(true)
+
+	submitButtonBlurred = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("240"))
+)
 
 type RequestPane struct {
 	methods       []string
 	currentMethod int
 	panelFocused  bool
 
-	// ISSUE #4: Confusing Focus Index System
-	// focusComponentIndex is used for BOTH method selection (index 0) AND text inputs.
-	// This creates confusion because:
-	// - Index 0 = method selection
-	// - Index 1+ should map to inputs, but inputs[0] is the first input!
-	// The mapping is: focusComponentIndex 1 -> inputs[0], focusComponentIndex 2 -> inputs[1]
-	// SOLUTION: Use constants for clarity:
-	//   const (
-	//       focusMethod = iota  // 0
-	//       focusURL            // 1 -> inputs[0]
-	//       focusName           // 2 -> inputs[1]
-	//       focusSubmit         // 3
-	//   )
 	focusComponentIndex int
 
-	// ISSUE #5: Input Order Confusion
-	// inputs[0] = URL, inputs[1] = Name
-	// But in SetupRequestPane, you initialize them in reverse visual order.
-	// This works but is confusing. Consider naming them explicitly:
-	//   urlInput  textinput.Model
-	//   nameInput textinput.Model
-	// Or at minimum, add comments documenting the indices.
-	inputs []textinput.Model // [0] = URL input, [1] = Name input
+	urlInput  textinput.Model
+	nameInput textinput.Model
 
-	// ISSUE #6: Unused Request Field
-	// This field is defined but NEVER populated with actual data!
-	// The inputs change, but m.request is never updated.
-	// SOLUTION: Add a syncRequest() method that's called after input changes:
-	//   func (m *RequestPane) syncRequest() {
-	//       m.request.Method = m.methods[m.currentMethod]
-	//       m.request.URL = m.inputs[0].Value()
-	//       m.request.Name = m.inputs[1].Value()
-	//   }
-	request http.Request
+	request *http.Request
 
 	// MISSING: Consider adding these fields for future features:
 	// headersExpanded bool
@@ -70,7 +63,13 @@ type RequestPane struct {
 	// validationError error
 }
 
-func (m *RequestPane) Init() tea.Cmd {
+func (m *RequestPane) syncRequest() {
+	m.request.Method = m.methods[m.currentMethod]
+	m.request.URL = m.urlInput.Value()
+	m.request.Name = m.nameInput.Value()
+}
+
+func (m RequestPane) Init() tea.Cmd {
 	return textinput.Blink
 }
 
@@ -82,7 +81,31 @@ func (m *RequestPane) GetCurrentMethod() string {
 	return m.methods[m.currentMethod]
 }
 
-func (m *RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *RequestPane) blurCurrentComponent() {
+	switch m.focusComponentIndex {
+	case focusMethod:
+		methodStyleBase.BorderForeground(unfocusColor)
+	case focusURL:
+		m.urlInput.Blur()
+	case focusName:
+		m.nameInput.Blur()
+	default:
+	}
+}
+
+func (m *RequestPane) focusCurrentComponent() {
+	switch m.focusComponentIndex {
+	case focusMethod:
+		methodStyleBase.BorderForeground(focusColor)
+	case focusURL:
+		m.urlInput.Focus()
+	case focusName:
+		m.nameInput.Focus()
+	default:
+	}
+}
+
+func (m RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if !m.panelFocused {
@@ -93,22 +116,8 @@ func (m *RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case tea.KeyTab.String(), tea.KeyUp.String(), tea.KeyDown.String():
 			s := msg.String()
-			// ISSUE #8: Submit button logic is in the wrong place
-			// This checks for "enter" key, but the switch only matches tab/up/down!
-			// This condition will NEVER be true because "enter" won't match this case.
-			// SOLUTION: Move submit logic to its own case or handle after focus cycling.
-			if s == "enter" && m.focusComponentIndex == len(m.inputs) {
-				return m, tea.Quit
-			}
 
-			// ISSUE #9: No Focus/Blur Management
-			// When changing focus, you should call .Blur() on the previously focused input
-			// and .Focus() on the newly focused input. Currently, all inputs stay in their
-			// initial state (only inputs[0] is focused from SetupRequestPane).
-			// SOLUTION: Add focus management:
-			//   m.blurCurrentComponent()
-			//   // ... change focusComponentIndex ...
-			//   m.focusCurrentComponent()
+			m.blurCurrentComponent()
 
 			// focus component cycling
 			if s == "up" {
@@ -117,239 +126,124 @@ func (m *RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focusComponentIndex++
 			}
 
-			// ISSUE #10: Off-by-one in focus wrapping
-			// You have 4 focusable components: method(0), url(1), name(2), submit(3)
-			// But len(m.inputs) = 2, so max should be 3, not len(m.inputs)
-			// Current logic: max = 2, but you need to support up to index 3 for submit button
-			// SOLUTION: Define a constant maxFocusIndex = 3 (or len(inputs) + 1 for submit)
-			if m.focusComponentIndex > len(m.inputs) {
+			if m.focusComponentIndex > maxFocusIndex {
 				m.focusComponentIndex = 0
 			} else if m.focusComponentIndex < 0 {
-				m.focusComponentIndex = len(m.inputs)
+				m.focusComponentIndex = maxFocusIndex
 			}
+			m.focusCurrentComponent()
 
 		}
 
-		// ISSUE #11: Focus-based routing is incomplete
-		// This switch only handles case 0 (method) and default (inputs).
-		// What about the submit button? It's never explicitly handled.
-		// When focusComponentIndex == 3 (submit), it falls to default and updates ALL inputs,
-		// which is inefficient and incorrect.
-		// SOLUTION: Add explicit cases:
-		//   case 0: // method selection
-		//   case 1: // URL input - update only inputs[0]
-		//   case 2: // Name input - update only inputs[1]
-		//   case 3: // Submit button - handle Enter key
 		switch m.focusComponentIndex {
-		// method selection
-		case 0:
+		case focusMethod:
 			switch msg.String() {
 			case tea.KeyRight.String(), "l":
 				m.currentMethod = (m.currentMethod + 1) % len(m.methods)
 			case tea.KeyLeft.String(), "h":
 				m.currentMethod = (m.currentMethod - 1 + len(m.methods)) % len(m.methods)
 			}
-		default:
-			// ISSUE #12: Updates ALL inputs regardless of focus
-			// Even if only inputs[1] is focused, this updates both inputs[0] and inputs[1].
-			// This works but is inefficient. Better to update only the focused input:
-			//   case 1: m.inputs[0], cmd = m.inputs[0].Update(msg)
-			//   case 2: m.inputs[1], cmd = m.inputs[1].Update(msg)
-			cmd := m.updateInputs(msg)
+		case focusURL:
+			var cmd tea.Cmd
+			m.urlInput, cmd = m.urlInput.Update(msg)
 			return m, cmd
+		case focusName:
+			var cmd tea.Cmd
+			m.nameInput, cmd = m.nameInput.Update(msg)
+			return m, cmd
+		case focusSubmit:
+			switch msg.String() {
+			case tea.KeyEnter.String():
+				m.syncRequest()
+				// TODO: Submit request and switch panels, display toast
+				return m, nil
+			}
+		default:
+
+			return m, nil
 
 		}
 
 	}
 
-	// ISSUE #13: Missing request sync
-	// After any update that changes input values, you should sync the request model:
-	// m.syncRequest() - to keep m.request up to date with current input values
-
+	m.syncRequest()
 	return m, nil
 }
 
-// ISSUE #14: View should use pointer receiver for consistency
-func (m *RequestPane) View() string {
+func (m RequestPane) View() string {
 	methodDisplay := m.methods[m.currentMethod]
+	var methodStyle lipgloss.Style
 
-	// ISSUE #15: Method style should change based on focus
-	// Currently, the method border changes when the PANEL is focused,
-	// but it should also change when the METHOD COMPONENT specifically is focused
-	// (i.e., when focusComponentIndex == 0).
-	// SOLUTION:
-	//   style := methodStyle
-	//   if m.panelFocused && m.focusComponentIndex == 0 {
-	//       style = style.BorderForeground(focusColor)
-	//   } else {
-	//       style = style.BorderForeground(unfocusColor)
-	//   }
-	style := methodStyle
-	if m.panelFocused {
-		style = style.BorderForeground(lipgloss.Color("205"))
+	switch methodDisplay {
+	case http.GET:
+		methodStyle = getMethodStyle
+	case http.POST:
+		methodStyle = postMethodStyle
+	case http.PUT:
+		methodStyle = putMethodStyle
+	case http.PATCH:
+		methodStyle = patchMethodStyle
+	case http.DELETE:
+		methodStyle = deleteMethodStyle
+	default:
+		methodStyle = methodStyleBase
 	}
 
-	// ISSUE #16: Inputs don't show which one is focused
-	// When rendering inputs, you should indicate which one is currently focused.
-	// The textinput.Model handles some of this internally, but only if Focus/Blur are called.
-	// Since you're not calling Focus/Blur in Update(), the inputs never change appearance.
-	// SOLUTION: Ensure Focus/Blur are called when changing focusComponentIndex
-	var b strings.Builder
+	if m.focusComponentIndex == focusMethod {
+		methodStyle = methodStyle.BorderForeground(focusColor)
+	}
+	methodRendered := methodStyle.Render(methodDisplay)
+	primaryLine := lipgloss.JoinHorizontal(lipgloss.Left, methodRendered, " ", m.urlInput.View())
 
-	for i := range m.inputs {
-		b.WriteString(m.inputs[i].View())
-		if i < len(m.inputs)-1 {
-			b.WriteString("\n")
-		}
+	nameLabel := labelStyle.Render("Name ")
+	nameLine := lipgloss.JoinHorizontal(lipgloss.Left, nameLabel, m.nameInput.View())
+
+	var button string
+	if m.focusComponentIndex == focusSubmit {
+		button = submitButtonFocused.Render("→ Send")
+	} else {
+		button = submitButtonBlurred.Render("→ Send")
 	}
 
-	// ISSUE #17: Poor Layout Structure
-	// Current layout:
-	//   HTTP Method:
-	//   [GET]
-	//   <URL input>
-	//   <Name input>
-	//
-	// Better layout would be:
-	//   [GET] https://example.com
-	//   Request Name: <name input>
-	//
-	// This puts method and URL on the same line, which is more natural and saves space.
-	// SOLUTION: Use lipgloss.JoinHorizontal to combine method and URL on one line:
-	//   firstLine := lipgloss.JoinHorizontal(lipgloss.Left, style.Render(methodDisplay), " ", m.inputs[0].View())
-	//   s := docStyle.Render(firstLine + "\n" + "Name: " + m.inputs[1].View())
+	helpText := HelpStyle.Render("tab/↑/↓: navigate • ←/→ or h/l: change method • enter: send • q: quit")
 
-	// ISSUE #18: No submit button rendered
-	// You define focusedButton and blurredButton at the top, but never render them!
-	// The View() should include a submit button at the bottom.
-	// SOLUTION: Add submit button rendering:
-	//   var button string
-	//   if m.focusComponentIndex == 3 {
-	//       button = focusedButton
-	//   } else {
-	//       button = blurredButton
-	//   }
-	//   s += "\n" + button
-
-	// ISSUE #19: No visual hierarchy
-	// Everything has the same visual weight. Consider:
-	// - Making the method + URL more prominent (larger, bolder)
-	// - Adding section separators
-	// - Using different colors for different sections
-	// - Adding labels: "URL:", "Name:", etc.
-
-	//s := docStyle.Render("HTTP Method: \n")
-	s := style.Render(methodDisplay) + "\n"
-	s += b.String() + "\n"
-
-	// ISSUE #20: No help text
-	// Users won't know what keys to press. Add help text:
-	//   help := helpStyle.Render("tab: next • ←/→: change method • enter: submit • esc: back")
-	//   s += "\n" + help
-
-	return s
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		"",
+		primaryLine,
+		nameLine,
+		"",
+		button,
+		helpText,
+	)
 }
 
-func (m *RequestPane) updateInputs(msg tea.Msg) tea.Cmd {
-	cmds := make([]tea.Cmd, len(m.inputs))
-
-	for i := range m.inputs {
-		m.inputs[i], cmds[i] = m.inputs[i].Update(msg)
-	}
-	return tea.Batch(cmds...)
-}
 func SetupRequestPane() RequestPane {
-	// ISSUE #21: Method order should match HTTP semantics
-	// Consider ordering: GET, POST, PUT, PATCH, DELETE
-	// This follows the CRUD pattern more naturally
 	methods := []string{
 		http.GET,
 		http.POST,
-		http.DELETE,
 		http.PUT,
+		http.PATCH,
+		http.DELETE,
 	}
 
 	m := RequestPane{
 		methods:             methods,
 		currentMethod:       0,
 		panelFocused:        false,
-		focusComponentIndex: 0, // ISSUE #22: Should this start at 0 (method) or 1 (URL)?
-		// Currently starts at method selection, but URL input is focused in the loop below.
-		// This is inconsistent! Either:
-		// 1. Start focusComponentIndex at 0 and don't focus any input initially
-		// 2. Start focusComponentIndex at 1 and focus inputs[0] (URL)
-		inputs: make([]textinput.Model, 2),
+		focusComponentIndex: focusMethod,
+		request:             http.NewDefaultRequest(),
 	}
 
-	// ISSUE #23: Request model not initialized
-	// You should initialize the request model with default values:
-	//   m.request = *http.NewDefaultRequest()
-	// or at minimum:
-	//   m.request.Method = methods[0]  // Set default to GET
+	m.urlInput = textinput.New()
+	m.urlInput.Placeholder = "http://localhost:"
+	m.urlInput.CharLimit = 40
+	m.urlInput.Width = 60
 
-	var t textinput.Model
-	for i := range m.inputs {
-		t = textinput.New()
-		//t.Cursor.Style = cursorStyle
-		t.CharLimit = 100 // ISSUE #24: CharLimit should match validation in http.Request
-
-		switch i {
-		case 0:
-			t.Placeholder = "URL"
-			// ISSUE #25: Only URL input is focused on init
-			// This is inconsistent with focusComponentIndex = 0 (method selection)
-			// If focusComponentIndex starts at 0 (method), no input should be focused yet.
-			// If focusComponentIndex starts at 1 (URL), then this is correct.
-			t.Focus()
-			//t.PromptStyle = focusedStyle
-			//t.TextStyle = focusedStyle
-		case 1:
-			t.Placeholder = "Request Name"
-			t.CharLimit = 300 // ISSUE #26: This should be 40 per http.Request validation
-			// See internal/http/request.go:70 - max name length is 40, not 300
-		}
-
-		m.inputs[i] = t
-	}
-
-	// ISSUE #27: Consider adding width configuration
-	// Text inputs should have Width set based on expected terminal size
-	// Example:
-	//   m.inputs[0].Width = 60  // URL input
-	//   m.inputs[1].Width = 40  // Name input
+	m.nameInput = textinput.New()
+	m.nameInput.Placeholder = "My new awesome request.."
+	m.nameInput.CharLimit = 40
+	m.nameInput.Width = 60
 
 	return m
 }
-
-// ============================================================================
-// SUMMARY OF ISSUES IN THIS FILE
-// ============================================================================
-//
-// CRITICAL (Fix First):
-// - Issue #4, #22, #25: Focus management is inconsistent and confusing
-// - Issue #6: Request model is never populated with data
-// - Issue #8: Submit button logic will never execute
-// - Issue #9: Focus/Blur never called, so inputs don't visually change
-// - Issue #18: Submit button never rendered
-//
-// HIGH PRIORITY (Fix Next):
-// - Issue #3, #7, #14: Inconsistent receiver types (value vs pointer)
-// - Issue #10: Off-by-one error in focus wrapping
-// - Issue #11, #12: Inefficient input updating
-// - Issue #26: CharLimit doesn't match validation rules
-//
-// MEDIUM PRIORITY (Improve UX):
-// - Issue #1, #2: Style duplication and static rendering
-// - Issue #15, #16: Focus indicators not clear enough
-// - Issue #17: Poor layout structure
-// - Issue #19: No visual hierarchy
-// - Issue #20: Missing help text
-//
-// LOW PRIORITY (Nice to Have):
-// - Issue #5: Input array vs named fields
-// - Issue #13: Request sync not called
-// - Issue #21: Method ordering
-// - Issue #23, #24, #27: Better defaults and configuration
-//
-// See docs/REQUEST_PANE_GUIDE.md for detailed implementation guidance
-// ============================================================================

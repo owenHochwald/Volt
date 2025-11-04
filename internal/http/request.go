@@ -12,7 +12,7 @@ const (
 	PUT    = "PUT"
 	DELETE = "DELETE"
 	//CONNECT = "CONNECT"
-	//PATCH   = "PATCH"
+	PATCH = "PATCH"
 	//OPTIONS = "OPTIONS"
 	//TRACE   = "TRACE"
 )
@@ -22,9 +22,9 @@ var validMethods = []string{
 	//HEAD,
 	POST,
 	PUT,
+	PATCH,
 	DELETE,
 	//CONNECT,
-	//PATCH,
 	//OPTIONS,
 	//TRACE,
 }
