@@ -1,6 +1,9 @@
 package ui
 
 import (
+	"encoding/json"
+	"strings"
+
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -62,6 +65,32 @@ func (m *RequestPane) syncRequest() {
 	m.request.URL = m.urlInput.Value()
 	m.request.Name = m.nameInput.Value()
 	// TODO: add parsing for headers and body
+	// header parsing
+	headerLines := strings.Split(m.headers.Value(), ",")
+	headerMap := make(map[string]string)
+	for _, line := range headerLines {
+		parts := strings.Split(line, "=")
+		if len(parts) == 2 {
+			headerMap[parts[0]] = parts[1]
+		}
+	}
+	//body parsing
+	bodyLines := strings.Split(m.body.Value(), ",")
+	bodyMap := make(map[string]string)
+	for _, line := range bodyLines {
+		parts := strings.Split(line, "=")
+		if len(parts) == 2 {
+			bodyMap[parts[0]] = parts[1]
+		}
+	}
+	jsonData, err := json.Marshal(bodyMap)
+	if err != nil {
+		// TODO: add standard error handling logic
+		return
+	}
+	m.request.Headers = headerMap
+	m.request.Body = string(jsonData)
+
 }
 
 func (m RequestPane) Init() tea.Cmd {
@@ -213,7 +242,7 @@ func (m RequestPane) View() string {
 	headersLabel := labelStyle.Render("Headers ")
 	headersLine := lipgloss.JoinHorizontal(lipgloss.Left, headersLabel, m.headers.View())
 
-	bodyLabel := labelStyle.Render("body ")
+	bodyLabel := labelStyle.Render("Body    ")
 	bodyLine := lipgloss.JoinHorizontal(lipgloss.Left, bodyLabel, m.body.View())
 
 	var button string
@@ -270,7 +299,8 @@ func SetupRequestPane() RequestPane {
 	}
 
 	m.urlInput = textinput.New()
-	m.urlInput.Placeholder = "http://localhost:"
+	//m.urlInput.Placeholder = "http://localhost:..."
+	m.urlInput.SetValue("http://localhost:")
 	m.urlInput.CharLimit = 40
 	m.urlInput.Width = 60
 
@@ -279,8 +309,8 @@ func SetupRequestPane() RequestPane {
 	m.nameInput.CharLimit = 40
 	m.nameInput.Width = 60
 
-	m.headers.Placeholder = "@host example.com"
+	m.headers.Placeholder = "Content-Type = multipart/form-data,\nAuthorization= Bearer ...,"
 
-	m.body.Placeholder = "key = value,"
+	m.body.Placeholder = "key = value,\nname = volt,\nversion=1.0"
 	return m
 }
