@@ -2,13 +2,13 @@ package ui
 
 import (
 	"encoding/json"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/owenHochwald/volt/internal/http"
+	"github.com/owenHochwald/volt/internal/utils"
 )
 
 const (
@@ -66,23 +66,9 @@ func (m *RequestPane) syncRequest() {
 	m.request.Name = m.nameInput.Value()
 	// TODO: add parsing for headers and body
 	// header parsing
-	headerLines := strings.Split(m.headers.Value(), ",")
-	headerMap := make(map[string]string)
-	for _, line := range headerLines {
-		parts := strings.Split(line, "=")
-		if len(parts) == 2 {
-			headerMap[parts[0]] = parts[1]
-		}
-	}
+	headerMap, _ := utils.ParseKeyValuePairs(m.headers.Value())
 	//body parsing
-	bodyLines := strings.Split(m.body.Value(), ",")
-	bodyMap := make(map[string]string)
-	for _, line := range bodyLines {
-		parts := strings.Split(line, "=")
-		if len(parts) == 2 {
-			bodyMap[parts[0]] = parts[1]
-		}
-	}
+	bodyMap, _ := utils.ParseKeyValuePairs(m.body.Value())
 	jsonData, err := json.Marshal(bodyMap)
 	if err != nil {
 		// TODO: add standard error handling logic
