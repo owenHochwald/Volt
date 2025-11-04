@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"fmt"
-
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -13,8 +11,12 @@ var (
 	FocusedStyle   = lipgloss.NewStyle().Foreground(focusColor)
 	UnfocusedStyle = lipgloss.NewStyle().Foreground(unfocusColor)
 
-	FocusedButton   = FocusedStyle.Render("[ Submit ]")
-	UnfocusedButton = fmt.Sprintf("[ %s ]", UnfocusedStyle.Render("Submit"))
+	FocusedButton = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("205")).
+			Bold(true)
+
+	UnfocusedButton = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("240"))
 
 	DocStyle = lipgloss.NewStyle().Margin(1, 2)
 
