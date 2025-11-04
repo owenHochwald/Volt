@@ -9,12 +9,13 @@ import (
 )
 
 const (
-	maxFocusIndex = 4
+	maxFocusIndex = 5
 
 	focusMethod = iota - 1
 	focusURL
 	focusName
 	focusHeaders
+	focusBody
 	focusSubmit
 )
 
@@ -51,8 +52,8 @@ type RequestPane struct {
 	headers         textarea.Model
 	//headers         []HeaderPair
 	// queryParams     []QueryParam
-	// bodyExpanded    bool
-	// bodyInput       textarea.Model
+	bodyExpanded bool
+	body         textarea.Model
 	// validationError error
 }
 
@@ -89,6 +90,8 @@ func (m *RequestPane) blurCurrentComponent() {
 		m.nameInput.Blur()
 	case focusHeaders:
 		m.headers.Blur()
+	case focusBody:
+		m.body.Blur()
 	default:
 	}
 }
@@ -103,6 +106,8 @@ func (m *RequestPane) focusCurrentComponent() {
 		m.nameInput.Focus()
 	case focusHeaders:
 		m.headers.Focus()
+	case focusBody:
+		m.body.Focus()
 	default:
 	}
 }
@@ -157,6 +162,10 @@ func (m RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			var cmd tea.Cmd
 			m.headers, cmd = m.headers.Update(msg)
 			return m, cmd
+		case focusBody:
+			var cmd tea.Cmd
+			m.headers, cmd = m.headers.Update(msg)
+			return m, cmd
 		case focusSubmit:
 			switch msg.String() {
 			case tea.KeyEnter.String():
@@ -204,6 +213,9 @@ func (m RequestPane) View() string {
 	headersLabel := labelStyle.Render("Headers ")
 	headersLine := lipgloss.JoinHorizontal(lipgloss.Left, headersLabel, m.headers.View())
 
+	bodyLabel := labelStyle.Render("body ")
+	bodyLine := lipgloss.JoinHorizontal(lipgloss.Left, bodyLabel, m.body.View())
+
 	var button string
 	if m.focusComponentIndex == focusSubmit {
 		button = FocusedButton.Render("→ Send")
@@ -217,6 +229,7 @@ func (m RequestPane) View() string {
 		primaryLine,
 		nameLine,
 		headersLine,
+		bodyLine,
 		"",
 		button,
 	)
@@ -246,8 +259,14 @@ func SetupRequestPane() RequestPane {
 		currentMethod:       0,
 		panelFocused:        false,
 		focusComponentIndex: focusMethod,
-		request:             http.NewDefaultRequest(),
-		headers:             textarea.New(),
+
+		headers:         textarea.New(),
+		headersExpanded: false,
+
+		body:         textarea.New(),
+		bodyExpanded: false,
+
+		request: http.NewDefaultRequest(),
 	}
 
 	m.urlInput = textinput.New()
@@ -261,7 +280,7 @@ func SetupRequestPane() RequestPane {
 	m.nameInput.Width = 60
 
 	m.headers.Placeholder = "@host example.com"
-	m.headersExpanded = false
 
+	m.body.Placeholder = "key = value,"
 	return m
 }
