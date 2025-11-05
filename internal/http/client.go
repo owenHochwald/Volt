@@ -2,7 +2,7 @@ package http
 
 import (
 	"context"
-	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -91,40 +91,25 @@ func (c *Client) makeCustomRequest(req *Request) (*http.Response, error) {
 }
 
 func (c *Client) Send(req *Request) (*Response, error) {
-	var res *http.Response
-	var err error
-	switch req.Method {
-	case GET:
-		res, err = c.Client.Get(req.URL)
-	case POST:
-		body := strings.NewReader(req.Body)
-		//req, err = http.NewRequest(req.Method, req.URL, body)
-		res, err = c.Client.Post(req.URL, req.Headers["content type"], body)
-	case PUT:
-		body := strings.NewReader("your string")
-		res, err = c.Client.Post(req.URL, req.Headers["content type"], body)
-	case DELETE:
-		//res, err = c.Client.Del(req.URL)
-		res, err = c.makeCustomRequest(req)
-	case PATCH:
-	default:
-		return nil, fmt.Errorf("invalid method: %s", req.Method)
-		// TODO: add future support for other methods
-		//CONNECT = "CONNECT"
-		//OPTIONS = "OPTIONS"
-		//TRACE   = "TRACE"
-		//case HEAD
-
-	}
+	res, err := c.makeCustomRequest(req)
 	if err != nil {
 		return nil, err
 	}
-	return &Response{
-		StatusCode: res.StatusCode,
-		//Body:       res.Body,
-	}, nil
 
-	//res, err := c.Client.Get("https://example.com")
+	// close body from earlier call
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Response{
+		Status:     res.Status,
+		StatusCode: res.StatusCode,
+		Body:       string(body),
+		Headers:    res.Header,
+	}, nil
 }
 
 //Measure request duration
