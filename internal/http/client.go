@@ -20,50 +20,6 @@ type Client struct {
 	Client    *http.Client
 }
 
-//round trip logic
-// Source - https://stackoverflow.com/questions/30526946/time-http-response-in-go
-// Posted by Devatoria
-// Retrieved 11/4/2025, License - CC-BY-SA 4.0
-
-//func Get() int {
-//	start := time.Now()
-//	result, err := http.Get("http://www.google.com")
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//	defer result.Body.Close()
-//	elapsed := time.Since(start).Seconds()
-//	log.Println(elapsed)
-//
-//	return result.StatusCode
-//}
-
-// just response time logic:
-// Source - https://stackoverflow.com/questions/30526946/time-http-response-in-go
-// Posted by icza
-// Retrieved 11/4/2025, License - CC-BY-SA 4.0
-
-//conn, err := net.Dial("tcp", "google.com:80")
-//if err != nil {
-//panic(err)
-//}
-//defer conn.Close()
-//conn.Write([]byte("GET / HTTP/1.0\r\n\r\n"))
-//
-//start := time.Now()
-//oneByte := make([]byte,1)
-//_, err = conn.Read(oneByte)
-//if err != nil {
-//panic(err)
-//}
-//log.Println("First byte:", time.Since(start))
-//
-//_, err = ioutil.ReadAll(conn)
-//if err != nil {
-//panic(err)
-//}
-//log.Println("Everything:", time.Since(start))
-
 func (c *Client) makeCustomRequest(req *Request) (*http.Response, error) {
 	payload := strings.NewReader(req.Body)
 	customReq, err := http.NewRequest(req.Method, req.URL, payload)
@@ -91,34 +47,40 @@ func (c *Client) makeCustomRequest(req *Request) (*http.Response, error) {
 }
 
 func (c *Client) Send(req *Request) (*Response, error) {
+	var start time.Time
+
+	if c.RoundTrip {
+		// time for connections, headers, and body
+		start = time.Now()
+	}
+
 	res, err := c.makeCustomRequest(req)
 	if err != nil {
 		return nil, err
 	}
 
+	if !c.RoundTrip {
+		// time for just first byte
+		start = time.Now()
+	}
+
 	// close body from earlier call
 	defer res.Body.Close()
-
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
+
+	duration := time.Since(start)
 
 	return &Response{
 		Status:     res.Status,
 		StatusCode: res.StatusCode,
 		Body:       string(body),
 		Headers:    res.Header,
+		Duration:   duration,
 	}, nil
 }
-
-//Measure request duration
-//Parse response headers and body
-//Handle errors gracefully (network errors, timeouts, invalid URLs)
-//Add proper context for cancellation
-//Write unit tests with httptest
-//
-//Definition
 
 func InitClient(timeout time.Duration, roundTrip bool) *Client {
 	if timeout == 0 {
@@ -137,5 +99,4 @@ func InitClient(timeout time.Duration, roundTrip bool) *Client {
 		Client:    client,
 		Transport: tr,
 	}
-
 }
