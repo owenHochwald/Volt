@@ -73,7 +73,6 @@ func (m *RequestPane) syncRequest() {
 	m.request.Method = m.methods[m.currentMethod]
 	m.request.URL = m.urlInput.Value()
 	m.request.Name = m.nameInput.Value()
-	// TODO: add parsing for headers and body
 	headerMap, headerErrors := utils.ParseKeyValuePairs(m.headers.Value())
 	bodyMap, bodyErrors := utils.ParseKeyValuePairs(m.body.Value())
 	jsonData, err := json.Marshal(bodyMap)
@@ -149,8 +148,8 @@ func (m *RequestPane) focusCurrentComponent() {
 }
 
 func (m *RequestPane) ResultMsgCleanup() {
-	m.stopwatch.Reset()
 	m.stopwatch.Stop()
+	m.stopwatch = stopwatch.NewWithInterval(10 * time.Millisecond)
 	m.requestInProgress = false
 }
 
@@ -279,7 +278,7 @@ func (m RequestPane) View() string {
 		seconds := float64(milliseconds) / 1000.0
 		stopwatchCount = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("241")).
-			Render(fmt.Sprintf("%.3fs (%dms)", seconds, milliseconds))
+			Render(fmt.Sprintf("%.3fs", seconds))
 	} else if m.focusComponentIndex == focusSubmit {
 		button = FocusedButton.Render("→ Send")
 	} else {
