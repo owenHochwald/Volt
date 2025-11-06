@@ -80,25 +80,27 @@ func TestClient_Send(t *testing.T) {
 				Headers: tt.headers,
 			}
 
-			res, err := client.Send(req)
+			res := make(chan *http2.Response)
+			go client.Send(req, res)
+			result := <-res
 
 			if tt.wantErr {
-				if err == nil {
+				if result.Error == "" {
 					t.Fatalf("expected error, got nil")
 				}
 				return
 			}
 
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
+			if result.Error != "" {
+				t.Fatalf("unexpected error: %v", result.Error)
 			}
 
-			if res.StatusCode != tt.wantStatusCode {
-				t.Errorf("expected status %d, got %d", tt.wantStatusCode, res.StatusCode)
+			if result.StatusCode != tt.wantStatusCode {
+				t.Errorf("expected status %d, got %d", tt.wantStatusCode, result.StatusCode)
 			}
 
-			if res.Body != tt.wantBody {
-				t.Errorf("expected body %q, got %q", tt.wantBody, res.Body)
+			if result.Body != tt.wantBody {
+				t.Errorf("expected body %q, got %q", tt.wantBody, result.Body)
 			}
 		})
 	}

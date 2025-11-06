@@ -2,6 +2,7 @@ package app
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/owenHochwald/volt/internal/http"
 	"github.com/owenHochwald/volt/internal/ui"
 )
 
@@ -32,6 +33,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		}
+	case http.ResultMsg:
+		m.requestPane.ResultMsgCleanup()
+		m.responsePane.Response = msg.Response
+		m.responsePane.SetFocused(true)
+		m.focusedPanel = ResponsePanel
+		return m, nil
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
 		m.httpMethods.SetSize(m.width/2, (m.height-15)/2)

@@ -46,7 +46,7 @@ func (c *Client) makeCustomRequest(req *Request) (*http.Response, error) {
 	return res, err
 }
 
-func (c *Client) Send(req *Request) (*Response, error) {
+func (c *Client) Send(req *Request, result chan<- *Response) {
 	var start time.Time
 
 	if c.RoundTrip {
@@ -56,7 +56,8 @@ func (c *Client) Send(req *Request) (*Response, error) {
 
 	res, err := c.makeCustomRequest(req)
 	if err != nil {
-		return nil, err
+		result <- &Response{Error: err.Error()}
+		return
 	}
 
 	if !c.RoundTrip {
@@ -68,18 +69,23 @@ func (c *Client) Send(req *Request) (*Response, error) {
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, err
+		result <- &Response{Error: err.Error()}
+		return
 	}
 
 	duration := time.Since(start)
 
-	return &Response{
+	result <- &Response{
 		Status:     res.Status,
 		StatusCode: res.StatusCode,
 		Body:       string(body),
 		Headers:    res.Header,
 		Duration:   duration,
-	}, nil
+	}
+}
+
+func (c *Client) ToggleRoundTrip() {
+	c.RoundTrip = !c.RoundTrip
 }
 
 func InitClient(timeout time.Duration, roundTrip bool) *Client {

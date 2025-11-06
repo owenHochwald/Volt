@@ -1,4 +1,5 @@
 # Volt
+[![Go Report Card](https://goreportcard.com/badge/github.com/owenHochwald/volt)](https://goreportcard.com/report/github.com/owenHochwald/volt)
 
 A high-performance, terminal-based HTTP client built for developers who live in the command line.
 
