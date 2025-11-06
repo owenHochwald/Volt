@@ -6,7 +6,7 @@ import (
 )
 
 type ResponsePane struct {
-	response *http.Response
+	Response *http.Response
 }
 
 func (m ResponsePane) Init() tea.Cmd {
@@ -31,6 +31,6 @@ func (m ResponsePane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func SetupResponsePane() *ResponsePane {
-	return &ResponsePane{}
+func SetupResponsePane() ResponsePane {
+	return ResponsePane{}
 }

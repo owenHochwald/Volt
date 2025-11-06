@@ -38,7 +38,8 @@ type Model struct {
 	httpMethods  list.Model
 	requestsList list.Model
 
-	requestPane ui.RequestPane
+	requestPane  ui.RequestPane
+	responsePane ui.ResponsePane
 
 	selectedRequest *RequestItem
 
@@ -50,7 +51,7 @@ type Model struct {
 	width, height int
 }
 
-func InitialModel() Model {
+func SetupModel() Model {
 	// TODO: Use these for new request creation: Only show saved reqs in sidebar
 	items := []list.Item{
 		HttpMethod{title: "GET", desc: "Get a resource"},
@@ -70,6 +71,7 @@ func InitialModel() Model {
 		httpMethods:     list.New(items, list.NewDefaultDelegate(), 0, 0),
 		requestsList:    list.New(mockRequestsList, list.NewDefaultDelegate(), 0, 0),
 		requestPane:     ui.SetupRequestPane(),
+		responsePane:    ui.SetupResponsePane(),
 		selectedRequest: nil,
 		focusedPanel:    SidebarPanel,
 	}
