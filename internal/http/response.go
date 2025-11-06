@@ -1,9 +1,23 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 )
+
+type ResultMsg struct {
+	Response *Response
+}
+
+func (r *ResultMsg) String() string {
+	if r.Response.Error != "" {
+		// TODO: add styles
+		return r.Response.Error
+	}
+	// TODO: add styles
+	return fmt.Sprintf("%s that took: %d ms", r.Response.StatusCode, r.Response.Duration)
+}
 
 type Response struct {
 	StatusCode int           `json:"status_code"`
