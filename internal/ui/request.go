@@ -2,7 +2,10 @@ package ui
 
 import (
 	"encoding/json"
+	"fmt"
+	"time"
 
+	"github.com/charmbracelet/bubbles/stopwatch"
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -40,6 +43,9 @@ var (
 type RequestPane struct {
 	client *http.Client
 
+	stopwatch stopwatch.Model
+	quitting  bool
+
 	methods       []string
 	currentMethod int
 	panelFocused  bool
@@ -57,11 +63,10 @@ type RequestPane struct {
 
 	headersExpanded bool
 	headers         textarea.Model
-	//headers         []HeaderPair
-	// queryParams     []QueryParam
-	bodyExpanded bool
-	body         textarea.Model
-	// validationError error
+	bodyExpanded    bool
+	body            textarea.Model
+
+	requestInProgress bool
 }
 
 func (m *RequestPane) syncRequest() {
@@ -80,6 +85,19 @@ func (m *RequestPane) syncRequest() {
 	m.request.Headers = headerMap
 	m.request.Body = string(jsonData)
 	m.parseErrors = append(headerErrors, bodyErrors...)
+}
+
+func sendRequestCmd(client *http.Client, request *http.Request) tea.Cmd {
+	return func() tea.Msg {
+		res := make(chan *http.Response)
+		go client.Send(request, res)
+
+		responseObject := <-res
+
+		return http.ResultMsg{
+			Response: responseObject,
+		}
+	}
 }
 
 func (m RequestPane) Init() tea.Cmd {
@@ -130,7 +148,17 @@ func (m *RequestPane) focusCurrentComponent() {
 	}
 }
 
+func (m *RequestPane) ResultMsgCleanup() {
+	m.stopwatch.Reset()
+	m.stopwatch.Stop()
+	m.requestInProgress = false
+}
+
 func (m RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+
+	m.stopwatch, cmd = m.stopwatch.Update(msg)
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if !m.panelFocused {
@@ -187,17 +215,17 @@ func (m RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case focusSubmit:
 			switch msg.String() {
 			case tea.KeyEnter.String():
+				if m.requestInProgress {
+					return m, nil
+				}
+
 				m.syncRequest()
-				// handle request sending logic
-				res := make(chan *http.Response)
+				m.requestInProgress = true
 
-				//start := time.Now()
-				go m.client.Send(m.request, res)
+				m.stopwatch.Reset()
+				stopwatchCmd := m.stopwatch.Start()
 
-				m.SetFocused(false)
-				m.focusComponentIndex = focusMethod
-
-				return m, nil
+				return m, tea.Batch(stopwatchCmd, sendRequestCmd(m.client, m.request))
 			}
 		default:
 			return m, nil
@@ -205,7 +233,7 @@ func (m RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	m.syncRequest()
-	return m, nil
+	return m, cmd
 }
 
 func (m RequestPane) View() string {
@@ -243,7 +271,16 @@ func (m RequestPane) View() string {
 	bodyLine := lipgloss.JoinHorizontal(lipgloss.Left, bodyLabel, m.body.View())
 
 	var button string
-	if m.focusComponentIndex == focusSubmit {
+	var stopwatchCount string
+	if m.requestInProgress {
+		button = FocusedButton.Render("Sending...")
+		elapsed := m.stopwatch.Elapsed()
+		milliseconds := elapsed.Milliseconds()
+		seconds := float64(milliseconds) / 1000.0
+		stopwatchCount = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("241")).
+			Render(fmt.Sprintf("%.3fs (%dms)", seconds, milliseconds))
+	} else if m.focusComponentIndex == focusSubmit {
 		button = FocusedButton.Render("→ Send")
 	} else {
 		button = UnfocusedButton.Render("→ Send")
@@ -266,6 +303,7 @@ func (m RequestPane) View() string {
 		lipgloss.Left,
 		mainContent,
 		lipgloss.NewStyle().Height(m.height-10).Render(""),
+		stopwatchCount,
 		helpText,
 	)
 
@@ -282,6 +320,7 @@ func SetupRequestPane() RequestPane {
 
 	m := RequestPane{
 		client:              http.InitClient(0, false),
+		stopwatch:           stopwatch.NewWithInterval(10 * time.Millisecond),
 		methods:             methods,
 		currentMethod:       0,
 		panelFocused:        false,

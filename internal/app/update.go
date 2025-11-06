@@ -34,10 +34,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	case http.ResultMsg:
-		var requestPaneModel tea.Model
-		requestPaneModel, _ = m.requestPane.Update(msg)
-		m.requestPane = requestPaneModel.(ui.RequestPane)
-
+		m.requestPane.ResultMsgCleanup()
 		m.responsePane.Response = msg.Response
 		m.responsePane.SetFocused(true)
 		m.focusedPanel = ResponsePanel
