@@ -82,6 +82,10 @@ func (c *Client) Send(req *Request) (*Response, error) {
 	}, nil
 }
 
+func (c *Client) ToggleRoundTrip() {
+	c.RoundTrip = !c.RoundTrip
+}
+
 func InitClient(timeout time.Duration, roundTrip bool) *Client {
 	if timeout == 0 {
 		timeout = TIMEOUT

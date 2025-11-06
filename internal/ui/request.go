@@ -38,6 +38,7 @@ var (
 )
 
 type RequestPane struct {
+	client        *http.Client
 	methods       []string
 	currentMethod int
 	panelFocused  bool
@@ -187,6 +188,8 @@ func (m RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case tea.KeyEnter.String():
 				m.syncRequest()
 				// TODO: Submit request and switch panels, display toast
+				m.client.Send(m.request)
+
 				return m, nil
 			}
 		default:
@@ -271,6 +274,7 @@ func SetupRequestPane() RequestPane {
 	}
 
 	m := RequestPane{
+		client:              http.InitClient(0, false),
 		methods:             methods,
 		currentMethod:       0,
 		panelFocused:        false,
