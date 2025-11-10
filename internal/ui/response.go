@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/alecthomas/chroma/v2/quick"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -35,9 +36,9 @@ func formatJSON(content string) string {
 	return pretty.String()
 }
 
-func highlightJSON(content string) string {
+func highlightContent(content, lexer string) string {
 	var buf bytes.Buffer
-	err := quick.Highlight(&buf, content, "json", "terminal256", "monokai")
+	err := quick.Highlight(&buf, content, lexer, "terminal256", "monokai")
 
 	if err != nil {
 		// return original content as fallback
@@ -51,10 +52,33 @@ func (m *ResponsePane) SetResponse(response *http.Response) {
 
 	if m.Response != nil {
 
-		// add more sophisticated parsing for json type
-		formatted := formatJSON(m.Response.Body)
-		content := highlightJSON(formatted)
+		if m.Response.Error != "" {
+			m.viewport.SetContent(m.Response.Error)
+			return
+		}
+		contentType := m.Response.ParseContentType()
+		content := m.Response.Body
 
+		switch {
+		case strings.Contains(contentType, "application/json"):
+			formatted := formatJSON(m.Response.Body)
+			content = highlightContent(formatted, "json")
+
+		case strings.Contains(contentType, "image/jpeg"):
+			fmt.Println("Sorry, we don't support image/jpeg yet!")
+		case strings.Contains(contentType, "text/html"):
+			content = highlightContent(content, "html")
+		case strings.Contains(contentType, "text/plain"):
+			content = highlightContent(content, "plaintext")
+		case strings.Contains(contentType, "application/xml"):
+			content = highlightContent(content, "xml")
+		case strings.Contains(contentType, "application/graphql"):
+			fmt.Println("Sorry, we don't support graphql yet!")
+		case strings.Contains(contentType, "multipart/form-data"):
+			fmt.Println("Sorry, we don't support multipart/form-data yet!")
+		default:
+			fmt.Printf("Unhandled Content-Type: %s\n", contentType)
+		}
 		m.viewport.SetContent(content)
 	}
 }
@@ -93,15 +117,14 @@ func (m ResponsePane) View() string {
 		return "Make a request to see the response here!"
 	}
 
-	// add in response header bar for error routes
 	if m.Response.Error != "" {
-		m.viewport.SetContent(m.Response.Error)
 		errorStyle := lipgloss.NewStyle().
 			Foreground(lipgloss.Color("160")).
 			Background(lipgloss.Color("52"))
 		statusBar := errorStyle.Render("ERROR")
 		return lipgloss.JoinVertical(lipgloss.Left, statusBar, m.viewport.View())
 	}
+
 	statusBar := m.renderHeaderBar()
 	return lipgloss.JoinVertical(lipgloss.Left, statusBar, m.viewport.View())
 }

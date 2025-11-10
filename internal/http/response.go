@@ -18,6 +18,10 @@ func (r *ResultMsg) String() string {
 	return fmt.Sprintf("%s that took: %d ms", r.Response.StatusCode, r.Response.Duration)
 }
 
+func (r *Response) ParseContentType() string {
+	return r.Headers.Get("Content-Type")
+}
+
 type Response struct {
 	StatusCode int           `json:"status_code"`
 	Status     string        `json:"status,omitempty"`
