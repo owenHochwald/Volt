@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/owenHochwald/volt/internal/http"
+	"github.com/owenHochwald/volt/internal/storage"
 	"github.com/owenHochwald/volt/internal/ui"
 )
 
@@ -35,6 +36,8 @@ func (i RequestItem) Description() string { return i.desc }
 func (i RequestItem) FilterValue() string { return i.title }
 
 type Model struct {
+	db *storage.SQLiteStorage
+
 	httpMethods  list.Model
 	requestsList list.Model
 
@@ -51,7 +54,7 @@ type Model struct {
 	width, height int
 }
 
-func SetupModel() Model {
+func SetupModel(db *storage.SQLiteStorage) Model {
 	// TODO: Use these for new request creation: Only show saved reqs in sidebar
 	items := []list.Item{
 		HttpMethod{title: "GET", desc: "Get a resource"},
@@ -68,6 +71,7 @@ func SetupModel() Model {
 	}
 
 	m := Model{
+		db:              db,
 		httpMethods:     list.New(items, list.NewDefaultDelegate(), 0, 0),
 		requestsList:    list.New(mockRequestsList, list.NewDefaultDelegate(), 0, 0),
 		requestPane:     ui.SetupRequestPane(),
