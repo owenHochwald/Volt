@@ -5,6 +5,18 @@ import (
 	"github.com/owenHochwald/volt/internal/http"
 )
 
+var (
+	methodStyleBase = lipgloss.NewStyle().
+			Padding(0, 1).
+			Bold(true)
+
+	getMethodStyle    = methodStyleBase.Foreground(lipgloss.Color("42"))  // Green
+	postMethodStyle   = methodStyleBase.Foreground(lipgloss.Color("214")) // Orange
+	putMethodStyle    = methodStyleBase.Foreground(lipgloss.Color("117")) // Blue
+	patchMethodStyle  = methodStyleBase.Foreground(lipgloss.Color("141")) // Purple
+	deleteMethodStyle = methodStyleBase.Foreground(lipgloss.Color("196")) // Red
+)
+
 type MethodSelector struct {
 	methods       []string
 	currentMethod int
@@ -63,7 +75,16 @@ func (m *MethodSelector) GetStyle() lipgloss.Style {
 	return methodStyle
 }
 
-func NewMethodSelector(methods []string) *MethodSelector {
+func NewMethodSelector() *MethodSelector {
+
+	methods := []string{
+		http.GET,
+		http.POST,
+		http.PUT,
+		http.PATCH,
+		http.DELETE,
+	}
+
 	return &MethodSelector{
 		methods:       methods,
 		currentMethod: 0,

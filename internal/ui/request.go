@@ -26,18 +26,8 @@ const (
 )
 
 var (
-	methodStyleBase = lipgloss.NewStyle().
-			Padding(0, 1).
-			Bold(true)
-
-	getMethodStyle    = methodStyleBase.Foreground(lipgloss.Color("42"))  // Green
-	postMethodStyle   = methodStyleBase.Foreground(lipgloss.Color("214")) // Orange
-	putMethodStyle    = methodStyleBase.Foreground(lipgloss.Color("117")) // Blue
-	patchMethodStyle  = methodStyleBase.Foreground(lipgloss.Color("141")) // Purple
-	deleteMethodStyle = methodStyleBase.Foreground(lipgloss.Color("196")) // Red
-
 	labelStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241"))
+		Foreground(lipgloss.Color("241"))
 )
 
 type RequestPane struct {
@@ -49,6 +39,7 @@ type RequestPane struct {
 	methods       []string
 	currentMethod int
 	panelFocused  bool
+	methodSelector MethodSelector
 
 	focusComponentIndex int
 
@@ -70,7 +61,7 @@ type RequestPane struct {
 }
 
 func (m *RequestPane) syncRequest() {
-	m.request.Method = m.methods[m.currentMethod]
+	m.request.Method = m.methodSelector.Current()
 	m.request.URL = m.urlInput.Value()
 	m.request.Name = m.nameInput.Value()
 	headerMap, headerErrors := utils.ParseKeyValuePairs(m.headers.Value())
@@ -112,7 +103,7 @@ func (m *RequestPane) SetHeight(height int) {
 }
 
 func (m *RequestPane) GetCurrentMethod() string {
-	return m.methods[m.currentMethod]
+	return m.methodSelector.Current()
 }
 
 func (m *RequestPane) blurCurrentComponent() {
@@ -191,9 +182,9 @@ func (m RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case focusMethod:
 			switch msg.String() {
 			case tea.KeyRight.String(), "l":
-				m.currentMethod = (m.currentMethod + 1) % len(m.methods)
+				m.methodSelector.Next()
 			case tea.KeyLeft.String(), "h":
-				m.currentMethod = (m.currentMethod - 1 + len(m.methods)) % len(m.methods)
+				m.methodSelector.Prev()
 			}
 		case focusURL:
 			var cmd tea.Cmd
@@ -236,28 +227,7 @@ func (m RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m RequestPane) View() string {
-	methodDisplay := m.methods[m.currentMethod]
-	var methodStyle lipgloss.Style
-
-	switch methodDisplay {
-	case http.GET:
-		methodStyle = getMethodStyle
-	case http.POST:
-		methodStyle = postMethodStyle
-	case http.PUT:
-		methodStyle = putMethodStyle
-	case http.PATCH:
-		methodStyle = patchMethodStyle
-	case http.DELETE:
-		methodStyle = deleteMethodStyle
-	default:
-		methodStyle = methodStyleBase
-	}
-
-	if m.focusComponentIndex == focusMethod {
-		methodStyle = methodStyle.BorderForeground(focusColor)
-	}
-	methodRendered := methodStyle.Render(methodDisplay)
+	methodRendered := m.methodSelector.GetStyle().Render(m.methodSelector.Current())
 	primaryLine := lipgloss.JoinHorizontal(lipgloss.Left, methodRendered, " ", m.urlInput.View())
 
 	nameLabel := labelStyle.Render("Name ")
@@ -309,14 +279,6 @@ func (m RequestPane) View() string {
 }
 
 func SetupRequestPane() RequestPane {
-	methods := []string{
-		http.GET,
-		http.POST,
-		http.PUT,
-		http.PATCH,
-		http.DELETE,
-	}
-
 	m := RequestPane{
 		client:              http.InitClient(0, false),
 		stopwatch:           stopwatch.NewWithInterval(10 * time.Millisecond),
