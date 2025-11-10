@@ -2,6 +2,7 @@ package ui
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -24,9 +25,20 @@ func (m ResponsePane) Init() tea.Cmd {
 	return nil
 }
 
+func formatJSON(content string) string {
+	var pretty bytes.Buffer
+	err := json.Indent(&pretty, []byte(content), "", "    ")
+
+	if err != nil {
+		// TODO: add standard error handling logic
+		fmt.Fprintf(os.Stderr, "Error highlighting response: %v", err)
+	}
+	return pretty.String()
+}
+
 func highlightJSON(content string) string {
 	var buf bytes.Buffer
-	err := quick.Highlight(&buf, content, "go", "terminal256", "monokai")
+	err := quick.Highlight(&buf, content, "json", "terminal256", "monokai")
 
 	if err != nil {
 		// TODO: add standard error handling logic
@@ -41,7 +53,8 @@ func (m *ResponsePane) SetResponse(response *http.Response) {
 	if m.Response != nil {
 
 		// add more sophisticated parsing for json type
-		content := highlightJSON(m.Response.Body)
+		formatted := formatJSON(m.Response.Body)
+		content := highlightJSON(formatted)
 
 		m.viewport.SetContent(content)
 	}
@@ -49,10 +62,13 @@ func (m *ResponsePane) SetResponse(response *http.Response) {
 
 func (m *ResponsePane) SetHeight(height int) {
 	m.height = height
+	m.viewport.Height = height
 }
 
 func (m *ResponsePane) SetWidth(width int) {
 	m.width = width
+	m.viewport.Width = width
+
 }
 
 func (m *ResponsePane) GetCurrentMethod() string {
@@ -90,13 +106,6 @@ func (m ResponsePane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd  tea.Cmd
 		cmds []tea.Cmd
 	)
-
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.viewport.Width = msg.Width
-		m.viewport.Height = msg.Height
-		m.viewport.SetContent(m.Response.Body)
-	}
 
 	m.viewport, cmd = m.viewport.Update(msg)
 	cmds = append(cmds, cmd)
