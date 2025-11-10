@@ -25,7 +25,8 @@ type RequestPane struct {
 	stopwatch stopwatch.Model
 	quitting  bool
 
-	panelFocused  bool
+	panelFocused bool
+
 	focusManager *FocusManager
 
 	methodSelector *MethodSelector
@@ -54,6 +55,7 @@ func (m *RequestPane) syncRequest() {
 	m.request.Method = m.methodSelector.Current()
 	m.request.URL = m.urlInput.Value()
 	m.request.Name = m.nameInput.Value()
+	// TODO: add parsing for headers and body
 	headerMap, headerErrors := utils.ParseKeyValuePairs(m.headers.Value())
 	bodyMap, bodyErrors := utils.ParseKeyValuePairs(m.body.Value())
 	jsonData, err := json.Marshal(bodyMap)
@@ -143,7 +145,7 @@ func (m RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		case 4:
 			var cmd tea.Cmd
-			*m.headers, cmd = m.body.Update(msg)
+			*m.body, cmd = m.body.Update(msg)
 			return m, cmd
 		case 5:
 			switch msg.String() {
@@ -262,7 +264,7 @@ func SetupRequestPane() RequestPane {
 		client:              http.InitClient(0, false),
 		stopwatch:           stopwatch.NewWithInterval(10 * time.Millisecond),
 		panelFocused:        false,
-
+		submitButton:    submitButton,
 		headersExpanded: false,
 		bodyExpanded:    false,
 		request:         http.NewDefaultRequest(),
