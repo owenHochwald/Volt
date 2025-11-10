@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
 
 	"github.com/alecthomas/chroma/v2/quick"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -30,8 +29,8 @@ func formatJSON(content string) string {
 	err := json.Indent(&pretty, []byte(content), "", "    ")
 
 	if err != nil {
-		// TODO: add standard error handling logic
-		fmt.Fprintf(os.Stderr, "Error highlighting response: %v", err)
+		// return original content as fallback
+		return content
 	}
 	return pretty.String()
 }
@@ -41,8 +40,8 @@ func highlightJSON(content string) string {
 	err := quick.Highlight(&buf, content, "json", "terminal256", "monokai")
 
 	if err != nil {
-		// TODO: add standard error handling logic
-		fmt.Fprintf(os.Stderr, "Error highlighting response: %v", err)
+		// return original content as fallback
+		return content
 	}
 	return buf.String()
 }
@@ -97,9 +96,11 @@ func (m ResponsePane) View() string {
 	// add in response header bar for error routes
 	if m.Response.Error != "" {
 		m.viewport.SetContent(m.Response.Error)
-		lipgloss.NewStyle().Foreground(lipgloss.Color("160")).Background(lipgloss.Color("160")).Render(
-			m.viewport.View(),
-		)
+		errorStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("160")).
+			Background(lipgloss.Color("52"))
+		statusBar := errorStyle.Render("ERROR")
+		return lipgloss.JoinVertical(lipgloss.Left, statusBar, m.viewport.View())
 	}
 	statusBar := m.renderHeaderBar()
 	return lipgloss.JoinVertical(lipgloss.Left, statusBar, m.viewport.View())
