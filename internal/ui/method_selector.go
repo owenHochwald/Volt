@@ -12,12 +12,10 @@ type MethodSelector struct {
 }
 
 func (m *MethodSelector) Focus() {
-	methodStyleBase.BorderForeground(focusColor)
 	m.focused = true
 }
 
 func (m *MethodSelector) Blur() {
-	methodStyleBase.BorderForeground(unfocusColor)
 	m.focused = false
 
 }
@@ -31,7 +29,10 @@ func (m *MethodSelector) Next() {
 }
 
 func (m *MethodSelector) Prev() {
-	m.currentMethod = (m.currentMethod - 1) % len(m.methods)
+	m.currentMethod--
+	if m.currentMethod < 0 {
+		m.currentMethod = len(m.methods) - 1
+	}
 }
 
 func (m *MethodSelector) GetStyle() lipgloss.Style {
@@ -53,11 +54,19 @@ func (m *MethodSelector) GetStyle() lipgloss.Style {
 		methodStyle = methodStyleBase
 	}
 
-	if m.focused == focusMethod {
+	if m.focused {
 		methodStyle = methodStyle.BorderForeground(focusColor)
 	} else {
 		methodStyle = methodStyle.BorderForeground(unfocusColor)
 	}
 
 	return methodStyle
+}
+
+func NewMethodSelector(methods []string) *MethodSelector {
+	return &MethodSelector{
+		methods:       methods,
+		currentMethod: 0,
+		focused:       false,
+	}
 }
