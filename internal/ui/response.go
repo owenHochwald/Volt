@@ -4,12 +4,12 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/owenHochwald/volt/internal/http"
+	"github.com/owenHochwald/volt/internal/utils"
 )
 
 type ResponsePane struct {
 	Response      *http.Response
 	height, width int
-	ready         bool
 
 	viewport viewport.Model
 }
@@ -18,7 +18,11 @@ func (m ResponsePane) Init() tea.Cmd {
 	return nil
 }
 
-func (m *ResponsePane) SetFocused(focused bool) {
+func (m *ResponsePane) SetResponse(response *http.Response) {
+	m.Response = response
+	if m.Response != nil {
+		m.viewport.SetContent(m.Response.Body)
+	}
 }
 
 func (m *ResponsePane) SetHeight(height int) {
@@ -37,10 +41,7 @@ func (m ResponsePane) View() string {
 	if m.Response == nil {
 		return "Make a request to see the response here!"
 	}
-	//if !m.ready {
-	//	return "\n  Initializing..."
-	//}
-	return m.viewport.View() + m.Response.Status
+	return m.viewport.View() + utils.MapStatusCodeToColor(m.Response.StatusCode).Render(m.Response.Status)
 }
 
 func (m ResponsePane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -51,14 +52,9 @@ func (m ResponsePane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		if !m.ready {
-			m.viewport = viewport.New(msg.Width, msg.Height)
-			m.viewport.SetContent(m.Response.Body)
-			m.ready = true
-		} else {
-			m.viewport.Width = msg.Width
-			m.viewport.Height = msg.Height
-		}
+		m.viewport.Width = msg.Width
+		m.viewport.Height = msg.Height
+		m.viewport.SetContent(m.Response.Body)
 	}
 
 	m.viewport, cmd = m.viewport.Update(msg)
@@ -69,6 +65,8 @@ func (m ResponsePane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func SetupResponsePane() ResponsePane {
 	return ResponsePane{
-		viewport: viewport.Model{},
+		viewport: viewport.New(20, 10),
+		width:    20,
+		height:   10,
 	}
 }

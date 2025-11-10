@@ -48,7 +48,6 @@ func (m Model) requestView(height int) string {
 }
 
 func (m Model) responseView(height, width int) string {
-	m.responsePane.SetFocused(m.focusedPanel == ResponsePanel)
 	m.responsePane.SetHeight(height)
 	m.responsePane.SetWidth(width)
 
