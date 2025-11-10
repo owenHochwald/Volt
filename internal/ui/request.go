@@ -14,17 +14,6 @@ import (
 	"github.com/owenHochwald/volt/internal/utils"
 )
 
-const (
-	maxFocusIndex = 5
-
-	focusMethod = iota - 1
-	focusURL
-	focusName
-	focusHeaders
-	focusBody
-	focusSubmit
-)
-
 var (
 	labelStyle = lipgloss.NewStyle().
 		Foreground(lipgloss.Color("241"))
@@ -36,15 +25,15 @@ type RequestPane struct {
 	stopwatch stopwatch.Model
 	quitting  bool
 
-	methods       []string
-	currentMethod int
 	panelFocused  bool
-	methodSelector MethodSelector
+	focusManager *FocusManager
 
-	focusComponentIndex int
-
-	urlInput  textinput.Model
-	nameInput textinput.Model
+	methodSelector *MethodSelector
+	urlInput       *textinput.Model
+	nameInput      *textinput.Model
+	headers        *textarea.Model
+	body           *textarea.Model
+	submitButton   *SubmitButton
 
 	request *http.Request
 
@@ -53,11 +42,12 @@ type RequestPane struct {
 	parseErrors []string
 
 	headersExpanded bool
-	headers         textarea.Model
-	bodyExpanded    bool
-	body            textarea.Model
 
 	requestInProgress bool
+	//headers         []HeaderPair
+	// queryParams     []QueryParam
+	bodyExpanded bool
+	// validationError error
 }
 
 func (m *RequestPane) syncRequest() {
@@ -106,38 +96,6 @@ func (m *RequestPane) GetCurrentMethod() string {
 	return m.methodSelector.Current()
 }
 
-func (m *RequestPane) blurCurrentComponent() {
-	switch m.focusComponentIndex {
-	case focusMethod:
-		methodStyleBase.BorderForeground(unfocusColor)
-	case focusURL:
-		m.urlInput.Blur()
-	case focusName:
-		m.nameInput.Blur()
-	case focusHeaders:
-		m.headers.Blur()
-	case focusBody:
-		m.body.Blur()
-	default:
-	}
-}
-
-func (m *RequestPane) focusCurrentComponent() {
-	switch m.focusComponentIndex {
-	case focusMethod:
-		methodStyleBase.BorderForeground(focusColor)
-	case focusURL:
-		m.urlInput.Focus()
-	case focusName:
-		m.nameInput.Focus()
-	case focusHeaders:
-		m.headers.Focus()
-	case focusBody:
-		m.body.Focus()
-	default:
-	}
-}
-
 func (m *RequestPane) ResultMsgCleanup() {
 	m.stopwatch.Stop()
 	m.stopwatch = stopwatch.NewWithInterval(10 * time.Millisecond)
@@ -157,52 +115,37 @@ func (m RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case tea.KeyCtrlC.String(), "q":
 			return m, tea.Quit
-		case tea.KeyTab.String(), tea.KeyUp.String(), tea.KeyDown.String():
-			s := msg.String()
-
-			m.blurCurrentComponent()
-
-			// focus component cycling
-			if s == "up" {
-				m.focusComponentIndex--
-			} else {
-				m.focusComponentIndex++
-			}
-
-			if m.focusComponentIndex > maxFocusIndex {
-				m.focusComponentIndex = 0
-			} else if m.focusComponentIndex < 0 {
-				m.focusComponentIndex = maxFocusIndex
-			}
-			m.focusCurrentComponent()
-
+		case tea.KeyTab.String(), tea.KeyUp.String():
+			m.focusManager.Next()
+		case tea.KeyDown.String():
+			m.focusManager.Prev()
 		}
 
-		switch m.focusComponentIndex {
-		case focusMethod:
+		switch m.focusManager.CurrentIndex() {
+		case 0:
 			switch msg.String() {
 			case tea.KeyRight.String(), "l":
 				m.methodSelector.Next()
 			case tea.KeyLeft.String(), "h":
 				m.methodSelector.Prev()
 			}
-		case focusURL:
+		case 1:
 			var cmd tea.Cmd
-			m.urlInput, cmd = m.urlInput.Update(msg)
+			*m.urlInput, cmd = m.urlInput.Update(msg)
 			return m, cmd
-		case focusName:
+		case 2:
 			var cmd tea.Cmd
-			m.nameInput, cmd = m.nameInput.Update(msg)
+			*m.nameInput, cmd = m.nameInput.Update(msg)
 			return m, cmd
-		case focusHeaders:
+		case 3:
 			var cmd tea.Cmd
-			m.headers, cmd = m.headers.Update(msg)
+			*m.headers, cmd = m.headers.Update(msg)
 			return m, cmd
-		case focusBody:
+		case 4:
 			var cmd tea.Cmd
-			m.headers, cmd = m.headers.Update(msg)
+			*m.headers, cmd = m.body.Update(msg)
 			return m, cmd
-		case focusSubmit:
+		case 5:
 			switch msg.String() {
 			case tea.KeyEnter.String():
 				if m.requestInProgress {
@@ -249,7 +192,7 @@ func (m RequestPane) View() string {
 		stopwatchCount = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("241")).
 			Render(fmt.Sprintf("%.3fs", seconds))
-	} else if m.focusComponentIndex == focusSubmit {
+	} else if m.submitButton.IsFocused() {
 		button = FocusedButton.Render("→ Send")
 	} else {
 		button = UnfocusedButton.Render("→ Send")
@@ -279,36 +222,52 @@ func (m RequestPane) View() string {
 }
 
 func SetupRequestPane() RequestPane {
+	methodSelector := NewMethodSelector()
+
+	urlInput := textinput.New()
+	urlInput.SetValue("http://localhost:")
+	urlInput.CharLimit = 40
+	urlInput.Width = 60
+
+	nameInput := textinput.New()
+	nameInput.Placeholder = "My new awesome request.."
+	nameInput.CharLimit = 40
+	nameInput.Width = 60
+
+	headers := textarea.New()
+	headers.Placeholder = "Content-Type = multipart/form-data,\nAuthorization= Bearer ...,"
+
+	body := textarea.New()
+	body.Placeholder = "key = value,\nname = volt,\nversion=1.0"
+
+	submitButton := NewSubmitButton()
+
+	components := []Focusable{
+		methodSelector,
+		&urlInput,
+		&nameInput,
+		&headers,
+		&body,
+		submitButton,
+	}
+	focusManager := NewFocusManager(components)
+
 	m := RequestPane{
+		methodSelector:  methodSelector,
+		urlInput:        &urlInput,
+		nameInput:       &nameInput,
+		headers:         &headers,
+		body:            &body,
+		focusManager:    focusManager,
 		client:              http.InitClient(0, false),
 		stopwatch:           stopwatch.NewWithInterval(10 * time.Millisecond),
-		methods:             methods,
-		currentMethod:       0,
 		panelFocused:        false,
-		focusComponentIndex: focusMethod,
 
-		headers:         textarea.New(),
 		headersExpanded: false,
-
-		body:         textarea.New(),
-		bodyExpanded: false,
-
-		request: http.NewDefaultRequest(),
+		bodyExpanded:    false,
+		request:         http.NewDefaultRequest(),
 	}
 
-	m.urlInput = textinput.New()
-	//m.urlInput.Placeholder = "http://localhost:..."
-	m.urlInput.SetValue("http://localhost:")
-	m.urlInput.CharLimit = 40
-	m.urlInput.Width = 60
-
-	m.nameInput = textinput.New()
-	m.nameInput.Placeholder = "My new awesome request.."
-	m.nameInput.CharLimit = 40
-	m.nameInput.Width = 60
-
-	m.headers.Placeholder = "Content-Type = multipart/form-data,\nAuthorization= Bearer ...,"
-
-	m.body.Placeholder = "key = value,\nname = volt,\nversion=1.0"
 	return m
+
 }

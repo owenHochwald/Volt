@@ -1,6 +1,7 @@
 package ui
 
 import (
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/owenHochwald/volt/internal/http"
 )
@@ -23,8 +24,9 @@ type MethodSelector struct {
 	focused       bool
 }
 
-func (m *MethodSelector) Focus() {
+func (m *MethodSelector) Focus() tea.Cmd {
 	m.focused = true
+	return nil
 }
 
 func (m *MethodSelector) Blur() {

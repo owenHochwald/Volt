@@ -1,7 +1,9 @@
 package ui
 
+import tea "github.com/charmbracelet/bubbletea"
+
 type Focusable interface {
-	Focus()
+	Focus() tea.Cmd
 	Blur()
 }
 
@@ -23,6 +25,10 @@ func (f *FocusManager) Prev() {
 		f.currentIndex = len(f.components) - 1
 	}
 	f.components[f.currentIndex].Focus()
+}
+
+func (f *FocusManager) CurrentIndex() int {
+	return f.currentIndex
 }
 
 func (f *FocusManager) Current() Focusable {
