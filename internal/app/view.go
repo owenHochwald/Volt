@@ -13,7 +13,7 @@ func (m Model) View() string {
 	mainHeight := contentHeight - 2
 
 	requestHeight := int(float64(mainHeight)/2.2) - 9
-	responseHeight := int(float64(mainHeight) / 2.2)
+	responseHeight := int(float64(mainHeight)/2.2) - 1
 
 	header := ui.HeaderStyle.Width(m.width).
 		Render("Volt - TUI HTTP Client - v0.1 [?] Help  [q] Quit")
@@ -26,7 +26,7 @@ func (m Model) View() string {
 
 	response := ui.ApplyFocus(ui.ResponseStyle, m.focusedPanel == 2).Width(mainWidth - 10).
 		Height(responseHeight).
-		Render("Response editor")
+		Render(m.responseView(responseHeight, mainWidth-10))
 
 	rightSide := lipgloss.JoinVertical(lipgloss.Right, request, response)
 	bottomPanels := lipgloss.JoinHorizontal(lipgloss.Top, sidebar, rightSide)
@@ -45,4 +45,11 @@ func (m Model) requestView(height int) string {
 	m.requestPane.SetHeight(height)
 
 	return m.requestPane.View()
+}
+
+func (m Model) responseView(height, width int) string {
+	m.responsePane.SetHeight(height)
+	m.responsePane.SetWidth(width)
+
+	return m.responsePane.View()
 }

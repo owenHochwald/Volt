@@ -15,8 +15,11 @@ func (r *ResultMsg) String() string {
 		// TODO: add styles
 		return r.Response.Error
 	}
-	// TODO: add styles
 	return fmt.Sprintf("%s that took: %d ms", r.Response.StatusCode, r.Response.Duration)
+}
+
+func (r *Response) ParseContentType() string {
+	return r.Headers.Get("Content-Type")
 }
 
 type Response struct {
@@ -26,4 +29,5 @@ type Response struct {
 	Body       string        `json:"body,omitempty"`
 	Duration   time.Duration `json:"duration,omitempty"`
 	Error      string        `json:"error,omitempty"`
+	RoundTrip  bool          `json:"round_trip,omitempty"`
 }

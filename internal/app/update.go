@@ -35,8 +35,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case http.ResultMsg:
 		m.requestPane.ResultMsgCleanup()
-		m.responsePane.Response = msg.Response
-		m.responsePane.SetFocused(true)
+		m.responsePane.SetResponse(msg.Response)
 		m.focusedPanel = ResponsePanel
 		return m, nil
 	case tea.WindowSizeMsg:
