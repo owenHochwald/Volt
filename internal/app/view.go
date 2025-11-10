@@ -13,7 +13,7 @@ func (m Model) View() string {
 	mainHeight := contentHeight - 2
 
 	requestHeight := int(float64(mainHeight)/2.2) - 9
-	responseHeight := int(float64(mainHeight) / 2.2)
+	responseHeight := int(float64(mainHeight)/2.2) - 1
 
 	header := ui.HeaderStyle.Width(m.width).
 		Render("Volt - TUI HTTP Client - v0.1 [?] Help  [q] Quit")
