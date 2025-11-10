@@ -1,8 +1,11 @@
 package ui
 
 import (
+	"bytes"
 	"fmt"
+	"os"
 
+	"github.com/alecthomas/chroma/v2/quick"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -21,10 +24,26 @@ func (m ResponsePane) Init() tea.Cmd {
 	return nil
 }
 
+func highlightJSON(content string) string {
+	var buf bytes.Buffer
+	err := quick.Highlight(&buf, content, "go", "terminal256", "monokai")
+
+	if err != nil {
+		// TODO: add standard error handling logic
+		fmt.Fprintf(os.Stderr, "Error highlighting response: %v", err)
+	}
+	return buf.String()
+}
+
 func (m *ResponsePane) SetResponse(response *http.Response) {
 	m.Response = response
+
 	if m.Response != nil {
-		m.viewport.SetContent(m.Response.Body)
+
+		// add more sophisticated parsing for json type
+		content := highlightJSON(m.Response.Body)
+
+		m.viewport.SetContent(content)
 	}
 }
 
@@ -43,6 +62,7 @@ func (m *ResponsePane) GetCurrentMethod() string {
 func (m ResponsePane) renderHeaderBar() string {
 	statusStyle := utils.MapStatusCodeToColor(m.Response.StatusCode)
 	status := statusStyle.Render(m.Response.Status)
+	// BUG: this is not working
 	duration := fmt.Sprintf(" %d ms", m.Response.Duration)
 	size := fmt.Sprintf(" %d bytes", len([]byte(m.Response.Body)))
 
@@ -88,6 +108,6 @@ func SetupResponsePane() ResponsePane {
 	return ResponsePane{
 		viewport: viewport.New(20, 10),
 		width:    20,
-		height:   10,
+		height:   30,
 	}
 }
