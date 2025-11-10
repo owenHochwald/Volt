@@ -8,6 +8,10 @@ var (
 	focusColor   = lipgloss.Color("205")
 	unfocusColor = lipgloss.Color("240")
 
+	ErrorStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("160")).
+			Background(lipgloss.Color("52"))
+
 	FocusedStyle   = lipgloss.NewStyle().Foreground(focusColor)
 	UnfocusedStyle = lipgloss.NewStyle().Foreground(unfocusColor)
 

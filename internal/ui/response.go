@@ -65,7 +65,7 @@ func (m *ResponsePane) SetResponse(response *http.Response) {
 			content = highlightContent(formatted, "json")
 
 		case strings.Contains(contentType, "image/jpeg"):
-			fmt.Println("Sorry, we don't support image/jpeg yet!")
+			content = "Sorry, we don't support image/jpeg yet!"
 		case strings.Contains(contentType, "text/html"):
 			content = highlightContent(content, "html")
 		case strings.Contains(contentType, "text/plain"):
@@ -73,11 +73,11 @@ func (m *ResponsePane) SetResponse(response *http.Response) {
 		case strings.Contains(contentType, "application/xml"):
 			content = highlightContent(content, "xml")
 		case strings.Contains(contentType, "application/graphql"):
-			fmt.Println("Sorry, we don't support graphql yet!")
+			content = "Sorry, we don't support graphql yet!"
 		case strings.Contains(contentType, "multipart/form-data"):
-			fmt.Println("Sorry, we don't support multipart/form-data yet!")
+			content = "Sorry, we don't support multipart/form-data yet!"
 		default:
-			fmt.Printf("Unhandled Content-Type: %s\n", contentType)
+			content = fmt.Sprintf("Unhandled Content-Type: %s\n", contentType)
 		}
 		m.viewport.SetContent(content)
 	}
@@ -94,10 +94,6 @@ func (m *ResponsePane) SetWidth(width int) {
 
 }
 
-func (m *ResponsePane) GetCurrentMethod() string {
-	return ""
-}
-
 func (m ResponsePane) renderHeaderBar() string {
 	statusStyle := utils.MapStatusCodeToColor(m.Response.StatusCode)
 	status := statusStyle.Render(m.Response.Status)
@@ -107,8 +103,7 @@ func (m ResponsePane) renderHeaderBar() string {
 	} else {
 		duration += " (direct)"
 	}
-	size := fmt.Sprintf(" %d bytes", len([]byte(m.Response.Body)))
-
+	size := fmt.Sprintf(" %s", utils.FormatSize(len(m.Response.Body)))
 	return lipgloss.JoinHorizontal(lipgloss.Left, " | ", status, " | ", duration, " | ", size)
 }
 
@@ -118,10 +113,7 @@ func (m ResponsePane) View() string {
 	}
 
 	if m.Response.Error != "" {
-		errorStyle := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("160")).
-			Background(lipgloss.Color("52"))
-		statusBar := errorStyle.Render("ERROR")
+		statusBar := ErrorStyle.Render("ERROR")
 		return lipgloss.JoinVertical(lipgloss.Left, statusBar, m.viewport.View())
 	}
 

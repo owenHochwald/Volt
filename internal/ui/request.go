@@ -117,9 +117,9 @@ func (m RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case tea.KeyCtrlC.String(), "q":
 			return m, tea.Quit
-		case tea.KeyTab.String(), tea.KeyUp.String():
+		case tea.KeyTab.String(), tea.KeyDown.String():
 			m.focusManager.Next()
-		case tea.KeyDown.String():
+		case tea.KeyUp.String():
 			m.focusManager.Prev()
 		}
 
@@ -261,9 +261,9 @@ func SetupRequestPane() RequestPane {
 		headers:         &headers,
 		body:            &body,
 		focusManager:    focusManager,
-		client:              http.InitClient(0, false),
-		stopwatch:           stopwatch.NewWithInterval(10 * time.Millisecond),
-		panelFocused:        false,
+		client:          http.InitClient(0, false),
+		stopwatch:       stopwatch.NewWithInterval(10 * time.Millisecond),
+		panelFocused:    false,
 		submitButton:    submitButton,
 		headersExpanded: false,
 		bodyExpanded:    false,
