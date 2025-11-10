@@ -81,6 +81,7 @@ func (c *Client) Send(req *Request, result chan<- *Response) {
 		Body:       string(body),
 		Headers:    res.Header,
 		Duration:   duration,
+		RoundTrip:  c.RoundTrip,
 	}
 }
 

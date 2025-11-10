@@ -78,8 +78,12 @@ func (m *ResponsePane) GetCurrentMethod() string {
 func (m ResponsePane) renderHeaderBar() string {
 	statusStyle := utils.MapStatusCodeToColor(m.Response.StatusCode)
 	status := statusStyle.Render(m.Response.Status)
-	// BUG: this is not working
-	duration := fmt.Sprintf(" %d ms", m.Response.Duration)
+	duration := fmt.Sprintf(" %d ms", m.Response.Duration.Milliseconds())
+	if m.Response.RoundTrip {
+		duration += " (round trip)"
+	} else {
+		duration += " (direct)"
+	}
 	size := fmt.Sprintf(" %d bytes", len([]byte(m.Response.Body)))
 
 	return lipgloss.JoinHorizontal(lipgloss.Left, " | ", status, " | ", duration, " | ", size)
