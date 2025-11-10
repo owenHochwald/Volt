@@ -26,7 +26,7 @@ func (m Model) View() string {
 
 	response := ui.ApplyFocus(ui.ResponseStyle, m.focusedPanel == 2).Width(mainWidth - 10).
 		Height(responseHeight).
-		Render("Response editor")
+		Render(m.responseView(responseHeight, mainWidth-10))
 
 	rightSide := lipgloss.JoinVertical(lipgloss.Right, request, response)
 	bottomPanels := lipgloss.JoinHorizontal(lipgloss.Top, sidebar, rightSide)
@@ -45,4 +45,12 @@ func (m Model) requestView(height int) string {
 	m.requestPane.SetHeight(height)
 
 	return m.requestPane.View()
+}
+
+func (m Model) responseView(height, width int) string {
+	m.responsePane.SetFocused(m.focusedPanel == ResponsePanel)
+	m.responsePane.SetHeight(height)
+	m.responsePane.SetWidth(width)
+
+	return m.responsePane.View()
 }
