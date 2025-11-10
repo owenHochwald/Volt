@@ -21,7 +21,7 @@ Modern API clients are powerful but heavy, slow for developer speed, and unintui
 
 ## Features
 
-**Current (MVP)**
+**Current**
 - HTTP methods: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, etc.
 - Request builder with URL, headers, and JSON body support
 - Three-panel layout: saved requests, request editor, and response viewer
@@ -29,15 +29,21 @@ Modern API clients are powerful but heavy, slow for developer speed, and unintui
 - Request validation and immediate feedback
 - Concurrent request handling with performance metrics
 - Vim-style keyboard navigation
-- Syntax-highlighted responses
+- **Beautiful response viewer:**
+  - Syntax-highlighted responses with Chroma (JSON, XML, HTML)
+  - Automatic JSON formatting with proper indentation
+  - Color-coded HTTP status codes (green=2xx, orange=3xx, red=4xx/5xx)
+  - Response timing and size metrics
+  - Scrollable viewport for large responses (j/k navigation)
+  - Multiple content-type support (JSON, XML, HTML, plain text)
 
 **Planned**
 - SQLite-based persistent storage for request collections
 - Response history and diff viewer
 - Environment variables and templating
-- Custom themes and color schemes
-- Multiple response format support (JSON, XML, HTML, plain text)
+- Custom themes and configuration files
 - GraphQL support
+- Enhanced response viewer (headers tab, copy/download actions)
 
 ## Quick Start
 
@@ -92,6 +98,14 @@ Volt is designed to be used entirely with your keyboard.
 - `Enter` - Send request (when on submit button)
 - Standard editing keys work in text inputs and text areas
 
+### Response Viewer
+- `j` / `↓` - Scroll down through response
+- `k` / `↑` - Scroll up through response
+- `d` - Scroll down half page
+- `u` - Scroll up half page
+- `g` - Jump to top of response
+- `G` - Jump to bottom of response
+
 ### Vim Philosophy
 
 Volt embraces Vim's modal efficiency:
@@ -142,12 +156,13 @@ Future versions will support configuration files for themes, keybindings, and de
 
 ### Near Term
 - Complete persistent storage implementation (SQLite)
-- Response panel with syntax highlighting
 - Request history and quick recall
 - Environment variable support
+- Collection management and organization
 
 ### Medium Term
 - Collection import/export (Postman/Insomnia formats)
+- Enhanced response viewer (headers, cookies, timeline tabs)
 - Custom themes and configuration files
 
 ### Long Term
