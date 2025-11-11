@@ -22,14 +22,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyEscape.String():
 			if m.focusedPanel == RequestPanel {
 				m.focusedPanel = SidebarPanel
-				m.selectedRequest = nil
 				return m, nil
 			}
 		case tea.KeyEnter.String(), " ":
 			if m.focusedPanel == SidebarPanel {
-				if i, ok := m.requestsList.SelectedItem().(RequestItem); ok {
+				if _, ok := m.sidebarPane.SelectedItem(); ok {
 					m.focusedPanel = RequestPanel
-					m.selectedRequest = &i
+					// TODO: Load the selected request into requestPane
 				}
 			}
 		}
@@ -40,13 +39,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
-		//m.httpMethods.SetSize(m.width/2, (m.height-15)/2)
-		m.requestsList.SetSize(m.width/2, (m.height-15)/2)
+		m.sidebarPane.SetSize(m.width/2, (m.height-15)/2)
 	}
 	if m.focusedPanel == SidebarPanel {
-		var cmd tea.Cmd
-		//m.httpMethods, cmd = m.httpMethods.Update(msg)
-		m.requestsList, cmd = m.requestsList.Update(msg)
+		cmd := m.sidebarPane.Update(msg)
 		return m, cmd
 	} else if m.focusedPanel == RequestPanel {
 		// use request pane update
