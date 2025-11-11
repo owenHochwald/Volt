@@ -3,6 +3,7 @@ package storage
 import (
 	"database/sql"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -20,10 +21,19 @@ type SQLiteStorage struct {
 }
 
 func serializeHeaders(headers map[string]string) (string, error) {
-	return "", nil
+	data, err := json.Marshal(headers)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }
 func deserializeHeaders(jsonStr string) (map[string]string, error) {
-	return nil, nil
+	var headers map[string]string
+	err := json.Unmarshal([]byte(jsonStr), &headers)
+	if err != nil {
+		return nil, err
+	}
+	return headers, nil
 }
 
 func runMigrations(db *sql.DB) error {
@@ -63,21 +73,82 @@ func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 
 }
 
-func (db *SQLiteStorage) Close() error {
-	return db.db.Close()
+func (s *SQLiteStorage) Close() error {
+	return s.db.Close()
 }
 
-func (db *SQLiteStorage) Save(request http.Request) error {
-	//TODO implement me
-	panic("implement me")
+func (s *SQLiteStorage) Save(request *http.Request) error {
+	headerString, err := serializeHeaders(request.Headers)
+	if err != nil {
+		return err
+	}
+	q := `INSERT INTO requests (name, method, url, headers, body) VALUES (?, ?, ?, ?, ?)`
+
+	res, err := s.db.Exec(q, request.Name, request.Method, request.URL, headerString, request.Body)
+	if err != nil {
+		return err
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return err
+	}
+	request.ID = id
+	return nil
+
 }
 
-func (db *SQLiteStorage) Load() ([]http.Request, error) {
-	//TODO implement me
-	panic("implement me")
+func (s *SQLiteStorage) Load() ([]http.Request, error) {
+	q := `SELECT id, id, name, method, url, headers, body FROM requests`
+	rows, err := s.db.Query(q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var requests []http.Request
+
+	for rows.Next() {
+		var (
+			id      int64
+			name    string
+			method  string
+			url     string
+			headers string
+			body    string
+		)
+
+		if err := rows.Scan(&id, &name, &method, &url, &headers, &body); err != nil {
+			return nil, err
+
+		}
+		headersMap, err := deserializeHeaders(headers)
+		if err != nil {
+			return nil, err
+		}
+		request := http.Request{
+			ID:      id,
+			Name:    name,
+			Method:  method,
+			URL:     url,
+			Headers: headersMap,
+			Body:    body,
+		}
+		requests = append(requests, request)
+	}
+	return requests, nil
 }
 
-func (db *SQLiteStorage) Delete(id int64) error {
-	//TODO implement me
-	panic("implement me")
+func (s *SQLiteStorage) Delete(id int64) error {
+	q := `DELETE FROM requests WHERE id = ?`
+	res, err := s.db.Exec(q, id)
+	if err != nil {
+		return err
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("request not found: %d", id)
+	}
+	return nil
 }

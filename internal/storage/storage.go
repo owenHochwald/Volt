@@ -5,7 +5,7 @@ import (
 )
 
 type Storage interface {
-	Save(requests http.Request) error
+	Save(requests *http.Request) error
 	Load() ([]http.Request, error)
 	Delete(id int64) error
 }
