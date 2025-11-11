@@ -40,12 +40,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
-		m.httpMethods.SetSize(m.width/2, (m.height-15)/2)
+		//m.httpMethods.SetSize(m.width/2, (m.height-15)/2)
 		m.requestsList.SetSize(m.width/2, (m.height-15)/2)
 	}
 	if m.focusedPanel == SidebarPanel {
 		var cmd tea.Cmd
-		m.httpMethods, cmd = m.httpMethods.Update(msg)
+		//m.httpMethods, cmd = m.httpMethods.Update(msg)
 		m.requestsList, cmd = m.requestsList.Update(msg)
 		return m, cmd
 	} else if m.focusedPanel == RequestPanel {
