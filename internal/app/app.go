@@ -33,7 +33,7 @@ func SetupModel(db *storage.SQLiteStorage) Model {
 	m := Model{
 		db:           db,
 		sidebarPane:  ui.NewSidebar(db),
-		requestPane:  ui.SetupRequestPane(),
+		requestPane:  ui.SetupRequestPane(db),
 		responsePane: ui.SetupResponsePane(),
 		focusedPanel: SidebarPanel,
 	}

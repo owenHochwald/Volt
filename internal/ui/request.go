@@ -11,6 +11,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/owenHochwald/volt/internal/http"
+	"github.com/owenHochwald/volt/internal/storage"
 	"github.com/owenHochwald/volt/internal/utils"
 )
 
@@ -49,6 +50,8 @@ type RequestPane struct {
 	// queryParams     []QueryParam
 	bodyExpanded bool
 	// validationError error
+
+	db *storage.SQLiteStorage
 }
 
 func (m *RequestPane) syncRequest() {
@@ -115,6 +118,15 @@ func (m RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		switch msg.String() {
+		case tea.KeyCtrlS.String(), tea.KeyShiftDown.String(), "s":
+			m.syncRequest()
+			// TODO: make this async so its not blocking!
+			err := m.db.Save(m.request)
+			if err != nil {
+				// TODO: add standard error handling logic
+				return m, LoadRequestsCmd(m.db)
+			}
+			return m, nil
 		case tea.KeyCtrlC.String(), "q":
 			return m, tea.Quit
 		case tea.KeyTab.String(), tea.KeyDown.String():
@@ -223,7 +235,7 @@ func (m RequestPane) View() string {
 
 }
 
-func SetupRequestPane() RequestPane {
+func SetupRequestPane(db *storage.SQLiteStorage) RequestPane {
 	methodSelector := NewMethodSelector()
 
 	urlInput := textinput.New()
@@ -268,6 +280,7 @@ func SetupRequestPane() RequestPane {
 		headersExpanded: false,
 		bodyExpanded:    false,
 		request:         http.NewDefaultRequest(),
+		db:              db,
 	}
 
 	return m

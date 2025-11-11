@@ -82,10 +82,11 @@ func (s *SidebarPane) Update(msg tea.Msg) tea.Cmd {
 		switch msg.String() {
 		case "d":
 			// TODO: make delete request async
-			if s.selectedRequest.Request == nil || s.selectedRequest.Request.ID == 0 {
+			item, ok := s.SelectedItem()
+			if !ok || item.Request == nil || item.Request.ID == 0 {
 				return nil
 			}
-			err := s.db.Delete(s.selectedRequest.Request.ID)
+			err := s.db.Delete(item.Request.ID)
 			if err != nil {
 				return nil
 			}

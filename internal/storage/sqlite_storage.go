@@ -98,12 +98,13 @@ func (s *SQLiteStorage) Save(request *http.Request) error {
 }
 
 func (s *SQLiteStorage) Load() ([]http.Request, error) {
-	q := `SELECT id, id, name, method, url, headers, body FROM requests`
+	q := `SELECT id, name, method, url, headers, body FROM requests`
 	rows, err := s.db.Query(q)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
+
 	var requests []http.Request
 
 	for rows.Next() {
