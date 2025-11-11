@@ -52,11 +52,37 @@ func (s *SidebarPane) SetRequests(items []list.Item) {
 }
 
 func (s *SidebarPane) Init() tea.Cmd {
-	return nil
+	return LoadRequestsCmd(s.db)
 }
 
 func (s *SidebarPane) Update(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
+
+	switch msg := msg.(type) {
+
+	//sidebar.requestsList.Title = fmt.Sprintf("Saved (%d)", len(sidebar.requestsList.Items()))
+
+	case RequestsLoadingMsg:
+
+		if msg.Err != nil {
+			s.SetRequests([]list.Item{})
+			s.requestsList.Title = "Saved (0)"
+			return nil
+
+		}
+		items := make([]list.Item, 0, len(msg.Requests))
+		for _, req := range msg.Requests {
+			items = append(items, RequestItem{
+				title:   req.Name,
+				desc:    req.URL[max(len(req.URL)-10, 0):],
+				Request: &req,
+			})
+		}
+		s.SetRequests(items)
+		s.requestsList.Title = fmt.Sprintf("Saved (%d)", len(s.requestsList.Items()))
+		return nil
+	}
+
 	s.requestsList, cmd = s.requestsList.Update(msg)
 	// TODO: handle key presses for deleting requests
 	return cmd
@@ -82,22 +108,12 @@ func (s *SidebarPane) SetSize(width, height int) {
 }
 
 func NewSidebar(db *storage.SQLiteStorage) *SidebarPane {
-	// TODO is there a way to make this async?
-	requests, err := db.Load()
-	var requestItems []list.Item
-
-	if err != nil {
-		requestItems = []list.Item{}
-	} else {
-		requestItems = make([]list.Item, len(requests))
-		for _, req := range requests {
-			requestItems = append(requestItems, RequestItem{
-				title: req.Name,
-				// TODO: add cool URL shading / fading styles
-				desc:    req.URL[(len(req.URL) - 10):],
-				Request: &req,
-			})
-		}
+	loadingItems := []list.Item{
+		RequestItem{
+			title:   "Loading...",
+			desc:    "Loading saved requests...",
+			Request: nil,
+		},
 	}
 
 	sidebar := &SidebarPane{
@@ -105,10 +121,10 @@ func NewSidebar(db *storage.SQLiteStorage) *SidebarPane {
 		height:       10,
 		width:        10,
 		db:           db,
-		requestsList: list.New(requestItems, list.NewDefaultDelegate(), 0, 0),
+		requestsList: list.New(loadingItems, list.NewDefaultDelegate(), 0, 0),
 	}
+	sidebar.requestsList.Title = "Saved (Loading...)"
 
-	sidebar.requestsList.Title = fmt.Sprintf("Saved (%d)", len(sidebar.requestsList.Items()))
 	customKeys := newCustomReqKeys()
 	sidebar.requestsList.AdditionalShortHelpKeys = func() []key.Binding {
 		return []key.Binding{
