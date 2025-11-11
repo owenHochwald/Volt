@@ -23,7 +23,6 @@ func main() {
 		fmt.Printf("Error connecting to database: %v", err)
 		return
 	}
-	fmt.Println("Connected to database")
 	defer store.Close()
 
 	p := tea.NewProgram(app.SetupModel(store), tea.WithAltScreen())

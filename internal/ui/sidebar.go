@@ -60,10 +60,7 @@ func (s *SidebarPane) Update(msg tea.Msg) tea.Cmd {
 
 	switch msg := msg.(type) {
 
-	//sidebar.requestsList.Title = fmt.Sprintf("Saved (%d)", len(sidebar.requestsList.Items()))
-
 	case RequestsLoadingMsg:
-
 		if msg.Err != nil {
 			s.SetRequests([]list.Item{})
 			s.requestsList.Title = "Saved (0)"
@@ -81,9 +78,25 @@ func (s *SidebarPane) Update(msg tea.Msg) tea.Cmd {
 		s.SetRequests(items)
 		s.requestsList.Title = fmt.Sprintf("Saved (%d)", len(s.requestsList.Items()))
 		return nil
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "d":
+			// TODO: make delete request async
+			if s.selectedRequest.Request == nil || s.selectedRequest.Request.ID == 0 {
+				return nil
+			}
+			err := s.db.Delete(s.selectedRequest.Request.ID)
+			if err != nil {
+				return nil
+			}
+			//s.SetRequests(s.requestsList.Items())
+			return LoadRequestsCmd(s.db)
+		}
+
 	}
 
 	s.requestsList, cmd = s.requestsList.Update(msg)
+
 	// TODO: handle key presses for deleting requests
 	return cmd
 }
