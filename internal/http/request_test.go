@@ -6,7 +6,7 @@ import (
 
 func TestRequest_Validate(t *testing.T) {
 	type fields struct {
-		ID      string
+		ID      int64
 		Name    string
 		Method  string
 		URL     string
@@ -22,7 +22,7 @@ func TestRequest_Validate(t *testing.T) {
 		{"empty url", fields{URL: ""}, true},
 		{"name too long", fields{Name: "name too longname too longname too longname too long"}, true},
 		{"valid", fields{Method: GET, URL: "http://localhost"}, false},
-		{"valid with id", fields{ID: "1234567890", Method: GET, URL: "http://localhost"}, false},
+		{"valid with id", fields{ID: 1234, Method: GET, URL: "http://localhost"}, false},
 		{"valid with name", fields{Name: "test", Method: GET, URL: "http://localhost"}, false},
 		{"valid with headers", fields{Method: GET, URL: "http://localhost", Headers: map[string]string{"Content-Type": "application/json"}}, false},
 		{"valid with body", fields{Method: GET, URL: "http://localhost", Body: "test"}, false},

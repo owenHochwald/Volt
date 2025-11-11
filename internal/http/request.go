@@ -30,7 +30,7 @@ var validMethods = []string{
 }
 
 type Request struct {
-	ID      string            `json:"id,omitempty"`
+	ID      int64             `json:"id,omitempty"`
 	Name    string            `json:"name,omitempty"`
 	Method  string            `json:"method"`
 	URL     string            `json:"url"`
@@ -63,10 +63,6 @@ func NewRequestWithParams(method, url string) *Request {
 }
 
 func (r *Request) Validate() error {
-	if r.ID != "" && len(r.ID) > 10 {
-		return fmt.Errorf("id too long: %s", r.ID)
-	}
-
 	if r.Name != "" && len(r.Name) > 40 {
 		return fmt.Errorf("name too long: %s", r.Name)
 	}

@@ -36,7 +36,7 @@ func (m Model) View() string {
 func (m Model) sidebarView(height, width int) string {
 	sidebar := ui.ApplyFocus(ui.SidebarStyle, m.focusedPanel == 0).Width(width).
 		Height(height - 4).
-		Render(m.requestsList.View())
+		Render(m.sidebarPane.View())
 	return sidebar
 }
 
