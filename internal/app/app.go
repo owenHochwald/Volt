@@ -32,7 +32,7 @@ type Model struct {
 func SetupModel(db *storage.SQLiteStorage) Model {
 	m := Model{
 		db:           db,
-		sidebarPane:  ui.NewSidebar(),
+		sidebarPane:  ui.NewSidebar(db),
 		requestPane:  ui.SetupRequestPane(),
 		responsePane: ui.SetupResponsePane(),
 		focusedPanel: SidebarPanel,
