@@ -26,6 +26,8 @@ type SidebarPane struct {
 	requestsList    list.Model
 	selectedRequest *RequestItem
 
+	desiredCursorIndex int
+
 	db *storage.SQLiteStorage
 }
 
@@ -60,11 +62,30 @@ func (s *SidebarPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		s.SetRequests(items)
 		s.requestsList.Title = fmt.Sprintf("Saved (%d)", len(s.requestsList.Items()))
+
+		if s.desiredCursorIndex >= 0 && len(items) > 0 {
+			cursorPos := min(s.desiredCursorIndex, len(items)-1)
+			s.requestsList.Select(cursorPos)
+			s.desiredCursorIndex = -1
+		}
 		return s, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "d":
 			item, ok := s.SelectedItem()
+			currentIndex := s.requestsList.Index()
+			itemCount := len(s.requestsList.Items())
+
+			if itemCount > 1 {
+				if currentIndex == itemCount-1 {
+					s.desiredCursorIndex = currentIndex - 1
+				} else {
+					s.desiredCursorIndex = currentIndex
+				}
+			} else {
+				s.desiredCursorIndex = 0
+			}
+
 			if !ok || item.Request == nil || item.Request.ID == 0 {
 				return s, nil
 			}
