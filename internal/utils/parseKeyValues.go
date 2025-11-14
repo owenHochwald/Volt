@@ -35,3 +35,8 @@ func ParseKeyValuePairs(input string) (map[string]string, []string) {
 
 	return result, errors
 }
+
+func ParseMapToString(data map[string]string) string {
+	//return string(data)
+	return ""
+}

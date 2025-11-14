@@ -112,13 +112,7 @@ func (m RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case SetRequestPaneRequestMsg:
-		m.request = msg.Request
-
-		m.urlInput.SetValue(msg.Request.URL)
-		m.nameInput.SetValue(msg.Request.Name)
-		//m.headers.SetValue(utils.ParseKeyValuePairs())
-		m.body.SetValue(msg.Request.Body)
-		//m.focusManager
+		m.reinitRequesetPane(msg.Request)
 		return m, nil
 	case tea.KeyMsg:
 		if !m.panelFocused {
@@ -233,7 +227,16 @@ func (m RequestPane) View() string {
 		stopwatchCount,
 		helpText,
 	)
+}
 
+func (m *RequestPane) reinitRequesetPane(request *http.Request) {
+	m.request = request
+
+	m.methodSelector.SetCurrentIndex(request.Method)
+	m.urlInput.SetValue(request.URL)
+	m.nameInput.SetValue(request.Name)
+	m.headers.SetValue(utils.ParseMapToString(request.Headers))
+	m.body.SetValue(request.Body[1 : len(request.Body)-1])
 }
 
 func SetupRequestPane(db *storage.SQLiteStorage) RequestPane {

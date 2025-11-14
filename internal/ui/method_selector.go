@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"slices"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/owenHochwald/volt/internal/http"
@@ -75,6 +77,17 @@ func (m *MethodSelector) GetStyle() lipgloss.Style {
 	}
 
 	return methodStyle
+}
+
+func (m *MethodSelector) SetCurrentIndex(method string) {
+	if method == "" || !slices.Contains(m.methods, method) {
+		return
+	}
+	for i, compare := range m.methods {
+		if compare == method {
+			m.currentMethod = i
+		}
+	}
 }
 
 func NewMethodSelector() *MethodSelector {
