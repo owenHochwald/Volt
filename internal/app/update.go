@@ -37,15 +37,39 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.responsePane.SetResponse(msg.Response)
 		m.focusedPanel = ResponsePanel
 		return m, nil
+
+	case ui.RequestSavedMsg:
+		if msg.Err != nil {
+			return m, nil
+		}
+		return m, tea.Batch(
+			ui.LoadRequestsCmd(m.db),
+		)
+	case ui.RequestDeletedMsg:
+		if msg.Err != nil {
+			return m, nil
+		}
+		return m, tea.Batch(
+			ui.LoadRequestsCmd(m.db),
+		)
+	case ui.RequestsLoadingMsg:
+		if msg.Err != nil {
+			return m, nil
+		}
+		var sidebarModel tea.Model
+		sidebarModel, cmd = m.sidebarPane.Update(msg)
+		m.sidebarPane = sidebarModel.(*ui.SidebarPane)
+		return m, cmd
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
 		m.sidebarPane.SetSize(m.width/2, (m.height-15)/2)
 	}
 	if m.focusedPanel == SidebarPanel {
-		cmd := m.sidebarPane.Update(msg)
+		var sidebarPaneModel tea.Model
+		sidebarPaneModel, cmd = m.sidebarPane.Update(msg)
+		m.sidebarPane = sidebarPaneModel.(*ui.SidebarPane)
 		return m, cmd
 	} else if m.focusedPanel == RequestPanel {
-		// use request pane update
 		m.requestPane.SetFocused(true)
 		var requestPaneModel tea.Model
 		requestPaneModel, cmd = m.requestPane.Update(msg)
