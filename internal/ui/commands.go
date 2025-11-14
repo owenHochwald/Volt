@@ -11,6 +11,36 @@ type RequestsLoadingMsg struct {
 	Err      error
 }
 
+type RequestSavedMsg struct {
+	Request *http.Request
+	Err     error
+}
+
+type RequestDeletedMsg struct {
+	ID  int64
+	Err error
+}
+
+func DeleteRequestCmd(db *storage.SQLiteStorage, id int64) tea.Cmd {
+	return func() tea.Msg {
+		err := db.Delete(id)
+		return RequestDeletedMsg{
+			ID:  id,
+			Err: err,
+		}
+	}
+}
+
+func SaveRequestCmd(db *storage.SQLiteStorage, request *http.Request) tea.Cmd {
+	return func() tea.Msg {
+		err := db.Save(request)
+		return RequestSavedMsg{
+			Request: request,
+			Err:     err,
+		}
+	}
+}
+
 func LoadRequestsCmd(db *storage.SQLiteStorage) tea.Cmd {
 	return func() tea.Msg {
 		requests, err := db.Load()

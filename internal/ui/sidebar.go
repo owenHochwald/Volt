@@ -3,9 +3,9 @@ package ui
 import (
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/owenHochwald/volt/internal/http"
 	"github.com/owenHochwald/volt/internal/storage"
 )
@@ -13,11 +13,6 @@ import (
 type RequestItem struct {
 	title, desc string
 	Request     *http.Request
-}
-
-type customReqKeys struct {
-	newItem key.Binding
-	delete  key.Binding
 }
 
 func (i RequestItem) Title() string       { return i.title }
@@ -31,31 +26,21 @@ type SidebarPane struct {
 	requestsList    list.Model
 	selectedRequest *RequestItem
 
-	db *storage.SQLiteStorage
-}
+	desiredCursorIndex int
 
-func newCustomReqKeys() customReqKeys {
-	return customReqKeys{
-		newItem: key.NewBinding(
-			key.WithKeys("n"),
-			key.WithHelp("n", "new request"),
-		),
-		delete: key.NewBinding(
-			key.WithKeys("d"),
-			key.WithHelp("d", "delete request"),
-		),
-	}
+	db *storage.SQLiteStorage
 }
 
 func (s *SidebarPane) SetRequests(items []list.Item) {
 	s.requestsList = list.New(items, list.NewDefaultDelegate(), s.width, s.height)
+	s.requestsList.SetShowHelp(false)
 }
 
 func (s *SidebarPane) Init() tea.Cmd {
 	return LoadRequestsCmd(s.db)
 }
 
-func (s *SidebarPane) Update(msg tea.Msg) tea.Cmd {
+func (s *SidebarPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
@@ -64,7 +49,7 @@ func (s *SidebarPane) Update(msg tea.Msg) tea.Cmd {
 		if msg.Err != nil {
 			s.SetRequests([]list.Item{})
 			s.requestsList.Title = "Saved (0)"
-			return nil
+			return s, nil
 
 		}
 		items := make([]list.Item, 0, len(msg.Requests))
@@ -77,33 +62,70 @@ func (s *SidebarPane) Update(msg tea.Msg) tea.Cmd {
 		}
 		s.SetRequests(items)
 		s.requestsList.Title = fmt.Sprintf("Saved (%d)", len(s.requestsList.Items()))
-		return nil
+
+		if s.desiredCursorIndex >= 0 && len(items) > 0 {
+			cursorPos := min(s.desiredCursorIndex, len(items)-1)
+			s.requestsList.Select(cursorPos)
+			s.desiredCursorIndex = -1
+		}
+		return s, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "d":
-			// TODO: make delete request async
 			item, ok := s.SelectedItem()
 			if !ok || item.Request == nil || item.Request.ID == 0 {
-				return nil
+				return s, nil
 			}
-			err := s.db.Delete(item.Request.ID)
-			if err != nil {
-				return nil
-			}
-			//s.SetRequests(s.requestsList.Items())
-			return LoadRequestsCmd(s.db)
-		}
 
+			currentIndex := s.requestsList.Index()
+			itemCount := len(s.requestsList.Items())
+			if itemCount > 1 {
+				if currentIndex == itemCount-1 {
+					s.desiredCursorIndex = currentIndex - 1
+				} else {
+					s.desiredCursorIndex = currentIndex
+				}
+			} else {
+				s.desiredCursorIndex = 0
+			}
+			return s, DeleteRequestCmd(s.db, item.Request.ID)
+		// navigation override
+		case tea.KeyUp.String(), "k":
+			currentIndex := s.requestsList.Index()
+
+			if currentIndex == 0 {
+				s.requestsList.Select(len(s.requestsList.Items()) - 1)
+			} else {
+				s.requestsList.Select(currentIndex - 1)
+			}
+			return s, nil
+		case tea.KeyDown.String(), "j":
+			currentIndex := s.requestsList.Index()
+			itemCount := len(s.requestsList.Items()) - 1
+
+			if currentIndex == itemCount {
+				s.requestsList.Select(0)
+			} else {
+				s.requestsList.Select(currentIndex + 1)
+			}
+			return s, nil
+		}
 	}
 
 	s.requestsList, cmd = s.requestsList.Update(msg)
 
-	// TODO: handle key presses for deleting requests
-	return cmd
+	return s, cmd
 }
 
 func (s *SidebarPane) View() string {
-	return s.requestsList.View()
+	helpText := HelpStyle.Render("n: new • d: delete • enter: send •/: filter")
+
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		s.requestsList.View(),
+		lipgloss.NewStyle().Height(s.height-1).Render(""),
+		helpText,
+	)
 }
 
 func (s *SidebarPane) SelectedItem() (RequestItem, bool) {
@@ -138,16 +160,7 @@ func NewSidebar(db *storage.SQLiteStorage) *SidebarPane {
 		requestsList: list.New(loadingItems, list.NewDefaultDelegate(), 0, 0),
 	}
 	sidebar.requestsList.Title = "Saved (Loading...)"
-
-	customKeys := newCustomReqKeys()
-	sidebar.requestsList.AdditionalShortHelpKeys = func() []key.Binding {
-		return []key.Binding{
-			customKeys.newItem,
-			customKeys.delete,
-		}
-	}
-
-	sidebar.requestsList.SetShowHelp(true)
+	sidebar.requestsList.SetShowHelp(false)
 
 	return sidebar
 }

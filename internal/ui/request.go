@@ -46,7 +46,6 @@ type RequestPane struct {
 	headersExpanded bool
 
 	requestInProgress bool
-	//headers         []HeaderPair
 	// queryParams     []QueryParam
 	bodyExpanded bool
 	// validationError error
@@ -58,7 +57,6 @@ func (m *RequestPane) syncRequest() {
 	m.request.Method = m.methodSelector.Current()
 	m.request.URL = m.urlInput.Value()
 	m.request.Name = m.nameInput.Value()
-	// TODO: add parsing for headers and body
 	headerMap, headerErrors := utils.ParseKeyValuePairs(m.headers.Value())
 	bodyMap, bodyErrors := utils.ParseKeyValuePairs(m.body.Value())
 	jsonData, err := json.Marshal(bodyMap)
@@ -118,15 +116,9 @@ func (m RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		switch msg.String() {
-		case tea.KeyCtrlS.String(), tea.KeyShiftDown.String(), "s":
+		case tea.KeyCtrlS.String(), tea.KeyShiftDown.String():
 			m.syncRequest()
-			// TODO: make this async so its not blocking!
-			err := m.db.Save(m.request)
-			if err != nil {
-				// TODO: add standard error handling logic
-				return m, LoadRequestsCmd(m.db)
-			}
-			return m, nil
+			return m, SaveRequestCmd(m.db, m.request)
 		case tea.KeyCtrlC.String(), "q":
 			return m, tea.Quit
 		case tea.KeyTab.String(), tea.KeyDown.String():
