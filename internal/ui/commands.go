@@ -11,6 +11,21 @@ type RequestsLoadingMsg struct {
 	Err      error
 }
 
+type RequestSavedMsg struct {
+	Request *http.Request
+	Err     error
+}
+
+func SaveRequestCmd(db *storage.SQLiteStorage, request *http.Request) tea.Cmd {
+	return func() tea.Msg {
+		err := db.Save(request)
+		return RequestSavedMsg{
+			Request: request,
+			Err:     err,
+		}
+	}
+}
+
 func LoadRequestsCmd(db *storage.SQLiteStorage) tea.Cmd {
 	return func() tea.Msg {
 		requests, err := db.Load()
