@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/owenHochwald/volt/internal/ui"
+	"github.com/owenHochwald/volt/internal/utils"
 )
 
 func (m Model) View() string {
@@ -41,7 +42,7 @@ func (m Model) sidebarView(height, width int) string {
 }
 
 func (m Model) requestView(height int) string {
-	m.requestPane.SetFocused(m.focusedPanel == RequestPanel)
+	m.requestPane.SetFocused(m.focusedPanel == utils.RequestPanel)
 	m.requestPane.SetHeight(height)
 
 	return m.requestPane.View()

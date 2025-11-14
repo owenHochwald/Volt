@@ -111,6 +111,15 @@ func (m RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.stopwatch, cmd = m.stopwatch.Update(msg)
 
 	switch msg := msg.(type) {
+	case SetRequestPaneRequestMsg:
+		m.request = msg.Request
+
+		m.urlInput.SetValue(msg.Request.URL)
+		m.nameInput.SetValue(msg.Request.Name)
+		//m.headers.SetValue(utils.ParseKeyValuePairs())
+		m.body.SetValue(msg.Request.Body)
+		//m.focusManager
+		return m, nil
 	case tea.KeyMsg:
 		if !m.panelFocused {
 			return m, nil

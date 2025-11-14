@@ -5,14 +5,7 @@ import (
 	"github.com/owenHochwald/volt/internal/http"
 	"github.com/owenHochwald/volt/internal/storage"
 	"github.com/owenHochwald/volt/internal/ui"
-)
-
-type Panel int
-
-const (
-	SidebarPanel Panel = iota
-	RequestPanel
-	ResponsePanel
+	"github.com/owenHochwald/volt/internal/utils"
 )
 
 type Model struct {
@@ -24,7 +17,7 @@ type Model struct {
 
 	savedRequests []http.Request
 
-	focusedPanel Panel
+	focusedPanel utils.Panel
 
 	width, height int
 }
@@ -35,7 +28,7 @@ func SetupModel(db *storage.SQLiteStorage) Model {
 		sidebarPane:  ui.NewSidebar(db),
 		requestPane:  ui.SetupRequestPane(db),
 		responsePane: ui.SetupResponsePane(),
-		focusedPanel: SidebarPanel,
+		focusedPanel: utils.SidebarPanel,
 	}
 	return m
 }

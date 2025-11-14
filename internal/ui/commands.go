@@ -21,6 +21,18 @@ type RequestDeletedMsg struct {
 	Err error
 }
 
+type SetRequestPaneRequestMsg struct {
+	Request *http.Request
+}
+
+func SetRequestPaneRequestCmd(request *http.Request) tea.Cmd {
+	return func() tea.Msg {
+		return SetRequestPaneRequestMsg{
+			Request: request,
+		}
+	}
+}
+
 func DeleteRequestCmd(db *storage.SQLiteStorage, id int64) tea.Cmd {
 	return func() tea.Msg {
 		err := db.Delete(id)
