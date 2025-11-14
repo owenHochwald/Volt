@@ -73,9 +73,12 @@ func (s *SidebarPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "d":
 			item, ok := s.SelectedItem()
+			if !ok || item.Request == nil || item.Request.ID == 0 {
+				return s, nil
+			}
+
 			currentIndex := s.requestsList.Index()
 			itemCount := len(s.requestsList.Items())
-
 			if itemCount > 1 {
 				if currentIndex == itemCount-1 {
 					s.desiredCursorIndex = currentIndex - 1
@@ -85,13 +88,28 @@ func (s *SidebarPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				s.desiredCursorIndex = 0
 			}
-
-			if !ok || item.Request == nil || item.Request.ID == 0 {
-				return s, nil
-			}
 			return s, DeleteRequestCmd(s.db, item.Request.ID)
-		}
+		// navigation override
+		case tea.KeyUp.String(), "k":
+			currentIndex := s.requestsList.Index()
 
+			if currentIndex == 0 {
+				s.requestsList.Select(len(s.requestsList.Items()) - 1)
+			} else {
+				s.requestsList.Select(currentIndex - 1)
+			}
+			return s, nil
+		case tea.KeyDown.String(), "j":
+			currentIndex := s.requestsList.Index()
+			itemCount := len(s.requestsList.Items()) - 1
+
+			if currentIndex == itemCount {
+				s.requestsList.Select(0)
+			} else {
+				s.requestsList.Select(currentIndex + 1)
+			}
+			return s, nil
+		}
 	}
 
 	s.requestsList, cmd = s.requestsList.Update(msg)
@@ -100,7 +118,7 @@ func (s *SidebarPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (s *SidebarPane) View() string {
-	helpText := HelpStyle.Render("n: new • d: delete •enter: send")
+	helpText := HelpStyle.Render("n: new • d: delete • enter: send •/: filter")
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
