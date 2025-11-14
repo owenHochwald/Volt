@@ -38,7 +38,7 @@ func (s *SidebarPane) Init() tea.Cmd {
 	return LoadRequestsCmd(s.db)
 }
 
-func (s *SidebarPane) Update(msg tea.Msg) tea.Cmd {
+func (s *SidebarPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
@@ -47,7 +47,7 @@ func (s *SidebarPane) Update(msg tea.Msg) tea.Cmd {
 		if msg.Err != nil {
 			s.SetRequests([]list.Item{})
 			s.requestsList.Title = "Saved (0)"
-			return nil
+			return s, nil
 
 		}
 		items := make([]list.Item, 0, len(msg.Requests))
@@ -60,29 +60,27 @@ func (s *SidebarPane) Update(msg tea.Msg) tea.Cmd {
 		}
 		s.SetRequests(items)
 		s.requestsList.Title = fmt.Sprintf("Saved (%d)", len(s.requestsList.Items()))
-		return nil
+		return s, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "d":
 			// TODO: make delete request async
 			item, ok := s.SelectedItem()
 			if !ok || item.Request == nil || item.Request.ID == 0 {
-				return nil
+				return s, nil
 			}
 			err := s.db.Delete(item.Request.ID)
 			if err != nil {
-				return nil
+				return s, nil
 			}
-			//s.SetRequests(s.requestsList.Items())
-			return LoadRequestsCmd(s.db)
+			return s, LoadRequestsCmd(s.db)
 		}
 
 	}
 
 	s.requestsList, cmd = s.requestsList.Update(msg)
 
-	// TODO: handle key presses for deleting requests
-	return cmd
+	return s, cmd
 }
 
 func (s *SidebarPane) View() string {
