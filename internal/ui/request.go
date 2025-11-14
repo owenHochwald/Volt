@@ -46,7 +46,6 @@ type RequestPane struct {
 	headersExpanded bool
 
 	requestInProgress bool
-	//headers         []HeaderPair
 	// queryParams     []QueryParam
 	bodyExpanded bool
 	// validationError error
@@ -58,7 +57,6 @@ func (m *RequestPane) syncRequest() {
 	m.request.Method = m.methodSelector.Current()
 	m.request.URL = m.urlInput.Value()
 	m.request.Name = m.nameInput.Value()
-	// TODO: add parsing for headers and body
 	headerMap, headerErrors := utils.ParseKeyValuePairs(m.headers.Value())
 	bodyMap, bodyErrors := utils.ParseKeyValuePairs(m.body.Value())
 	jsonData, err := json.Marshal(bodyMap)

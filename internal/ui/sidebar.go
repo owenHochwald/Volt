@@ -3,9 +3,9 @@ package ui
 import (
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/owenHochwald/volt/internal/http"
 	"github.com/owenHochwald/volt/internal/storage"
 )
@@ -13,11 +13,6 @@ import (
 type RequestItem struct {
 	title, desc string
 	Request     *http.Request
-}
-
-type customReqKeys struct {
-	newItem key.Binding
-	delete  key.Binding
 }
 
 func (i RequestItem) Title() string       { return i.title }
@@ -34,21 +29,9 @@ type SidebarPane struct {
 	db *storage.SQLiteStorage
 }
 
-func newCustomReqKeys() customReqKeys {
-	return customReqKeys{
-		newItem: key.NewBinding(
-			key.WithKeys("n"),
-			key.WithHelp("n", "new request"),
-		),
-		delete: key.NewBinding(
-			key.WithKeys("d"),
-			key.WithHelp("d", "delete request"),
-		),
-	}
-}
-
 func (s *SidebarPane) SetRequests(items []list.Item) {
 	s.requestsList = list.New(items, list.NewDefaultDelegate(), s.width, s.height)
+	s.requestsList.SetShowHelp(false)
 }
 
 func (s *SidebarPane) Init() tea.Cmd {
@@ -103,7 +86,14 @@ func (s *SidebarPane) Update(msg tea.Msg) tea.Cmd {
 }
 
 func (s *SidebarPane) View() string {
-	return s.requestsList.View()
+	helpText := HelpStyle.Render("n: new • d: delete •enter: send")
+
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		s.requestsList.View(),
+		lipgloss.NewStyle().Height(s.height-1).Render(""),
+		helpText,
+	)
 }
 
 func (s *SidebarPane) SelectedItem() (RequestItem, bool) {
@@ -138,16 +128,7 @@ func NewSidebar(db *storage.SQLiteStorage) *SidebarPane {
 		requestsList: list.New(loadingItems, list.NewDefaultDelegate(), 0, 0),
 	}
 	sidebar.requestsList.Title = "Saved (Loading...)"
-
-	customKeys := newCustomReqKeys()
-	sidebar.requestsList.AdditionalShortHelpKeys = func() []key.Binding {
-		return []key.Binding{
-			customKeys.newItem,
-			customKeys.delete,
-		}
-	}
-
-	sidebar.requestsList.SetShowHelp(true)
+	sidebar.requestsList.SetShowHelp(false)
 
 	return sidebar
 }
