@@ -223,7 +223,7 @@ func (m RequestPane) View() string {
 		button,
 	)
 
-	helpText := HelpStyle.Render("tab/↑/↓: navigate • ←/→ or h/l: change method • enter: send • q: quit")
+	helpText := HelpStyle.Render("tab/↑/↓: navigate • ←/→ or h/l: change method • enter: send • ctrl+s: save request")
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
