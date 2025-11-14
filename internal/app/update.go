@@ -37,7 +37,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.responsePane.SetResponse(msg.Response)
 		m.focusedPanel = ResponsePanel
 		return m, nil
+
 	case ui.RequestSavedMsg:
+		if msg.Err != nil {
+			return m, nil
+		}
+		return m, tea.Batch(
+			ui.LoadRequestsCmd(m.db),
+		)
+	case ui.RequestDeletedMsg:
 		if msg.Err != nil {
 			return m, nil
 		}

@@ -64,16 +64,11 @@ func (s *SidebarPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "d":
-			// TODO: make delete request async
 			item, ok := s.SelectedItem()
 			if !ok || item.Request == nil || item.Request.ID == 0 {
 				return s, nil
 			}
-			err := s.db.Delete(item.Request.ID)
-			if err != nil {
-				return s, nil
-			}
-			return s, LoadRequestsCmd(s.db)
+			return s, DeleteRequestCmd(s.db, item.Request.ID)
 		}
 
 	}
