@@ -37,6 +37,10 @@ func ParseKeyValuePairs(input string) (map[string]string, []string) {
 }
 
 func ParseMapToString(data map[string]string) string {
-	//return string(data)
-	return ""
+	var result strings.Builder
+
+	for key, value := range data {
+		result.WriteString(key + " = " + value + ",\n")
+	}
+	return result.String()
 }
