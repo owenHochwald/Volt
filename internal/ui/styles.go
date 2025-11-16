@@ -8,6 +8,10 @@ var (
 	focusColor   = lipgloss.Color("205")
 	unfocusColor = lipgloss.Color("240")
 
+	darkPurple = lipgloss.Color("#4C1D95")
+	deepViolet = lipgloss.Color("#5B21B6")
+	dimGray    = lipgloss.Color("240")
+
 	ErrorStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("160")).
 			Background(lipgloss.Color("52"))
@@ -31,6 +35,14 @@ var (
 	HeaderStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			Height(2)
+
+	// Header ASCII art styles
+	HeaderLogoStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(darkPurple)
+
+	HeaderHelpStyle = lipgloss.NewStyle().
+			Foreground(dimGray)
 
 	SidebarStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
