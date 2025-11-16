@@ -76,6 +76,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		requestPaneModel, cmd = m.requestPane.Update(msg)
 		m.requestPane = requestPaneModel.(ui.RequestPane)
 		return m, cmd
+	} else if m.focusedPanel == utils.ResponsePanel {
+		var responsePaneModel tea.Model
+		responsePaneModel, cmd = m.responsePane.Update(msg)
+		m.responsePane = responsePaneModel.(*ui.ResponsePane)
+		return m, cmd
 	}
 	return m, cmd
 }
