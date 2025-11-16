@@ -13,7 +13,7 @@ type Model struct {
 
 	sidebarPane  *ui.SidebarPane
 	requestPane  ui.RequestPane
-	responsePane ui.ResponsePane
+	responsePane *ui.ResponsePane
 	headerPane   *ui.Header
 
 	savedRequests []http.Request
@@ -24,11 +24,12 @@ type Model struct {
 }
 
 func SetupModel(db *storage.SQLiteStorage) Model {
+	responsePane := ui.SetupResponsePane()
 	m := Model{
 		db:           db,
 		sidebarPane:  ui.NewSidebar(db),
 		requestPane:  ui.SetupRequestPane(db),
-		responsePane: ui.SetupResponsePane(),
+		responsePane: &responsePane,
 		focusedPanel: utils.SidebarPanel,
 		headerPane:   ui.SetupHeader(),
 	}
