@@ -1,73 +1,52 @@
 package ui
 
 import (
-	"time"
-
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type Header struct {
-	text      string
-	progress  progress.Model
-	percent   float64
-	expanding bool
-	width     int
-}
-
-type tickMsg time.Time
-
-func tickCmd() tea.Cmd {
-	return tea.Tick(time.Millisecond*100, func(t time.Time) tea.Msg {
-		return tickMsg(t)
-	})
+	progress progress.Model
+	width    int
 }
 
 func (h *Header) Init() tea.Cmd {
-	return tickCmd()
-}
-
-func (h *Header) SetWidth(width int) {
-	h.width = width
+	return nil
 }
 
 func (h *Header) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tickMsg:
-		if h.expanding {
-			h.percent += 0.01
-			if h.percent > 1.0 {
-				h.percent = 1.0
-				h.expanding = false
-			}
-		} else {
-			h.percent -= 0.01
-			if h.percent < 0.0 {
-				h.percent = 0.0
-				h.expanding = true
-			}
-		}
-		return h, tickCmd()
 	case tea.WindowSizeMsg:
-		h.width = msg.Width
-		h.progress.Width = msg.Width - 4
+		h.width = msg.Width - 4
+		h.progress.Width = h.width
 	}
-
-	return h, tickCmd()
+	return h, nil
 }
 
 func (h *Header) View() string {
-	s := h.text + " - TUI HTTP Client - v0.1 [?] Help  [q] Quit"
-	return s + "\n" + h.progress.ViewAs(h.percent)
+	voltStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("205")).
+		PaddingRight(1)
+
+	helpStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("240"))
+
+	title := voltStyle.Render("VOLT ⚡")
+	help := helpStyle.Render("│ v0.1 • [?] Help • [q] Quit")
+	headerText := lipgloss.JoinHorizontal(lipgloss.Left, title, help)
+
+	progressBar := h.progress.ViewAs(1.0)
+
+	return lipgloss.JoinVertical(lipgloss.Left, headerText, progressBar)
 }
 
-func SetupHeader(text string) *Header {
+func SetupHeader() *Header {
 	return &Header{
-		text:  text,
 		width: 80,
 		progress: progress.New(
-			progress.WithScaledGradient("#7C3AED", "#EC4899"),
+			progress.WithScaledGradient("#4C1D95", "#7C3AED"), // Dark purple → lighter purple
 			progress.WithoutPercentage()),
-		expanding: true,
 	}
 }

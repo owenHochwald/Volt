@@ -32,7 +32,6 @@ func (m Model) View() string {
 }
 
 func (m Model) headerView(width int) string {
-	m.headerPane.SetWidth(width)
 	header := ui.HeaderStyle.Width(width).Render(m.headerPane.View())
 	return header
 }

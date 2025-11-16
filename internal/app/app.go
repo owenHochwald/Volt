@@ -30,19 +30,11 @@ func SetupModel(db *storage.SQLiteStorage) Model {
 		requestPane:  ui.SetupRequestPane(db),
 		responsePane: ui.SetupResponsePane(),
 		focusedPanel: utils.SidebarPanel,
-		headerPane:   ui.SetupHeader("VOLT"),
+		headerPane:   ui.SetupHeader(),
 	}
 	return m
 }
 
 func (m Model) Init() tea.Cmd {
-	var cmds []tea.Cmd
-
-	cmds = append(
-		cmds,
-		m.sidebarPane.Init(),
-		m.headerPane.Init(),
-	)
-
-	return tea.Batch(cmds...)
+	return m.sidebarPane.Init()
 }
