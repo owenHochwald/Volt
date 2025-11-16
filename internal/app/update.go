@@ -10,6 +10,10 @@ import (
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
+	var headerModel tea.Model
+	headerModel, cmd = m.headerPane.Update(msg)
+	m.headerPane = headerModel.(*ui.Header)
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {

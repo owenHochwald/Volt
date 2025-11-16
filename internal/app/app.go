@@ -38,7 +38,11 @@ func SetupModel(db *storage.SQLiteStorage) Model {
 func (m Model) Init() tea.Cmd {
 	var cmds []tea.Cmd
 
-	cmds = append(cmds, m.sidebarPane.Init())
+	cmds = append(
+		cmds,
+		m.sidebarPane.Init(),
+		m.headerPane.Init(),
+	)
 
 	return tea.Batch(cmds...)
 }
