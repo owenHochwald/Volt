@@ -14,6 +14,7 @@ type Model struct {
 	sidebarPane  *ui.SidebarPane
 	requestPane  ui.RequestPane
 	responsePane *ui.ResponsePane
+	headerPane   *ui.Header
 
 	savedRequests []http.Request
 
@@ -30,14 +31,11 @@ func SetupModel(db *storage.SQLiteStorage) Model {
 		requestPane:  ui.SetupRequestPane(db),
 		responsePane: &responsePane,
 		focusedPanel: utils.SidebarPanel,
+		headerPane:   ui.SetupHeader(),
 	}
 	return m
 }
 
 func (m Model) Init() tea.Cmd {
-	var cmds []tea.Cmd
-
-	cmds = append(cmds, m.sidebarPane.Init())
-
-	return tea.Batch(cmds...)
+	return m.sidebarPane.Init()
 }

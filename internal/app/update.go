@@ -43,16 +43,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Err != nil {
 			return m, nil
 		}
-		return m, tea.Batch(
-			ui.LoadRequestsCmd(m.db),
-		)
+		return m, ui.LoadRequestsCmd(m.db)
+
 	case ui.RequestDeletedMsg:
 		if msg.Err != nil {
 			return m, nil
 		}
-		return m, tea.Batch(
-			ui.LoadRequestsCmd(m.db),
-		)
+		return m, ui.LoadRequestsCmd(m.db)
+
 	case ui.RequestsLoadingMsg:
 		if msg.Err != nil {
 			return m, nil
@@ -61,10 +59,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		sidebarModel, cmd = m.sidebarPane.Update(msg)
 		m.sidebarPane = sidebarModel.(*ui.SidebarPane)
 		return m, cmd
+
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
 		m.sidebarPane.SetSize(m.width/2, (m.height-15)/2)
 	}
+
 	if m.focusedPanel == utils.SidebarPanel {
 		var sidebarPaneModel tea.Model
 		sidebarPaneModel, cmd = m.sidebarPane.Update(msg)
@@ -82,5 +82,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.responsePane = responsePaneModel.(*ui.ResponsePane)
 		return m, cmd
 	}
+
 	return m, cmd
 }
