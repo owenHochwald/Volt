@@ -15,12 +15,12 @@ import (
 )
 
 var (
-	InactiveTab = lipgloss.NewStyle().Padding(0, 1).Foreground(lipgloss.Color("240"))
-	ActiveTab   = lipgloss.NewStyle().Padding(0, 1).Background(lipgloss.Color("76")).Foreground(lipgloss.Color("255"))
+	inactiveTab = lipgloss.NewStyle().Padding(0, 1).Foreground(lipgloss.Color("240"))
+	activeTab   = lipgloss.NewStyle().Padding(0, 1).Background(lipgloss.Color("76")).Foreground(lipgloss.Color("255"))
 )
 
 type ResponsePane struct {
-	Response *http.Response
+	Response      *http.Response
 	height, width int
 
 	viewport  viewport.Model
@@ -95,7 +95,50 @@ func (m *ResponsePane) SetHeight(height int) {
 func (m *ResponsePane) SetWidth(width int) {
 	m.width = width
 	m.viewport.Width = width
+}
 
+func (m *ResponsePane) updateViewportForActiveTab() {
+	if m.Response == nil {
+		return
+	}
+
+	var content string
+	switch m.activeTab {
+	case 0: // Body - re-render the response body
+		if m.Response.Error != "" {
+			content = m.Response.Error
+		} else {
+			contentType := m.Response.ParseContentType()
+			content = m.Response.Body
+
+			switch {
+			case strings.Contains(contentType, "application/json"):
+				formatted := formatJSON(m.Response.Body)
+				content = highlightContent(formatted, "json")
+			case strings.Contains(contentType, "image/jpeg"):
+				content = "Sorry, we don't support image/jpeg yet!"
+			case strings.Contains(contentType, "text/html"):
+				content = highlightContent(content, "html")
+			case strings.Contains(contentType, "text/plain"):
+				content = highlightContent(content, "plaintext")
+			case strings.Contains(contentType, "application/xml"):
+				content = highlightContent(content, "xml")
+			case strings.Contains(contentType, "application/graphql"):
+				content = "Sorry, we don't support graphql yet!"
+			case strings.Contains(contentType, "multipart/form-data"):
+				content = "Sorry, we don't support multipart/form-data yet!"
+			default:
+				content = fmt.Sprintf("Unhandled Content-Type: %s\n", contentType)
+			}
+		}
+	case 1: // Headers
+		content = m.renderHeaders()
+	case 2: // Cookies
+		content = m.renderCookies()
+	case 3: // Timing
+		content = m.renderTiming()
+	}
+	m.viewport.SetContent(content)
 }
 
 func (m ResponsePane) renderHeaderBar() string {
@@ -133,7 +176,7 @@ func (m ResponsePane) View() string {
 	return lipgloss.JoinVertical(lipgloss.Left, statusBar, tabHeader, tabContent)
 }
 
-func (m ResponsePane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *ResponsePane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 		cmd  tea.Cmd
 		cmds []tea.Cmd
@@ -144,12 +187,16 @@ func (m ResponsePane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "1":
 			m.activeTab = 0
+			m.updateViewportForActiveTab()
 		case "2":
 			m.activeTab = 1
+			m.updateViewportForActiveTab()
 		case "3":
 			m.activeTab = 2
+			m.updateViewportForActiveTab()
 		case "4":
 			m.activeTab = 3
+			m.updateViewportForActiveTab()
 		}
 	}
 
@@ -174,9 +221,9 @@ func (m ResponsePane) renderTabs() string {
 
 	for i, tab := range tabs {
 		if i == m.activeTab {
-			renderedTabs = append(renderedTabs, ActiveTab.Render(tab))
+			renderedTabs = append(renderedTabs, activeTab.Render(tab))
 		} else {
-			renderedTabs = append(renderedTabs, InactiveTab.Render(tab))
+			renderedTabs = append(renderedTabs, inactiveTab.Render(tab))
 		}
 	}
 
