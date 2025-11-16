@@ -14,7 +14,6 @@ import (
 	"github.com/owenHochwald/volt/internal/utils"
 )
 
-// Added styles for the new tabs
 var (
 	InactiveTab = lipgloss.NewStyle().Padding(0, 1).Foreground(lipgloss.Color("240"))
 	ActiveTab   = lipgloss.NewStyle().Padding(0, 1).Background(lipgloss.Color("76")).Foreground(lipgloss.Color("255"))
@@ -24,9 +23,8 @@ type ResponsePane struct {
 	Response *http.Response
 	height, width int
 
-	viewport viewport.Model
-	// activeTab tracks the currently selected tab
-	activeTab int // 0=Body, 1=Headers, 2=Cookies, 3=Timing
+	viewport  viewport.Model
+	activeTab int
 }
 
 func (m ResponsePane) Init() tea.Cmd {
@@ -38,7 +36,6 @@ func formatJSON(content string) string {
 	err := json.Indent(&pretty, []byte(content), "", "    ")
 
 	if err != nil {
-		// return original content as fallback
 		return content
 	}
 	return pretty.String()
@@ -49,7 +46,6 @@ func highlightContent(content, lexer string) string {
 	err := quick.Highlight(&buf, content, lexer, "terminal256", "monokai")
 
 	if err != nil {
-		// return original content as fallback
 		return content
 	}
 	return buf.String()
@@ -120,20 +116,18 @@ func (m ResponsePane) View() string {
 		return "Make a request to see the response here!"
 	}
 
+	var statusBar string
+
 	if m.Response.Error != "" {
-		// Still show the error, but do it in the body panel
-		statusBar := ErrorStyle.Render("ERROR")
+		statusBar = ErrorStyle.Render("ERROR")
 		m.viewport.SetContent(m.Response.Error)
-		// return lipgloss.JoinVertical(lipgloss.Left, statusBar, m.viewport.View())
+	} else {
+		statusBar = m.renderHeaderBar()
 	}
 
-	statusBar := m.renderHeaderBar()
-	// Render the new tab header
 	tabHeader := m.renderTabs()
 
-	// Set viewport height dynamically, leaving room for status and tabs
 	m.viewport.Height = m.height - 2
-	// Render the content for the active tab
 	tabContent := m.renderActiveTabContent()
 
 	return lipgloss.JoinVertical(lipgloss.Left, statusBar, tabHeader, tabContent)
@@ -145,7 +139,6 @@ func (m ResponsePane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds []tea.Cmd
 	)
 
-	// Handle key presses for tab switching
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -171,11 +164,10 @@ func SetupResponsePane() ResponsePane {
 		viewport:  viewport.New(20, 10),
 		width:     20,
 		height:    30,
-		activeTab: 0, // Default to the "Body" tab
+		activeTab: 0,
 	}
 }
 
-// renderTabs draws the tab interface
 func (m ResponsePane) renderTabs() string {
 	tabs := []string{"[1] Body", "[2] Headers", "[3] Cookies", "[4] Timing"}
 	renderedTabs := []string{}
@@ -191,38 +183,30 @@ func (m ResponsePane) renderTabs() string {
 	return lipgloss.JoinHorizontal(lipgloss.Left, renderedTabs...)
 }
 
-// renderActiveTabContent returns the content for the currently active tab
 func (m ResponsePane) renderActiveTabContent() string {
 	switch m.activeTab {
-	case 0: // Body
-		// The viewport content is already set
+	case 0:
 		return m.viewport.View()
-	case 1: // Headers
+	case 1:
 		return m.renderHeaders()
-	case 2: // Cookies
+	case 2:
 		return m.renderCookies()
-	case 3: // Timing
+	case 3:
 		return m.renderTiming()
 	default:
 		return "Something went wrong."
 	}
 }
 
-// renderHeaders creates a formatted string of all response headers
 func (m ResponsePane) renderHeaders() string {
-	// Placeholder: This function needs to be implemented
 	return "Headers Content Goes Here\n\n(Not yet implemented)"
 }
 
-// renderCookies creates a formatted string of cookies
 func (m ResponsePane) renderCookies() string {
-	// Placeholder: This function needs to be implemented
 	return "Cookies Content Goes Here\n\n(Not yet implemented)"
 }
 
-// renderTiming creates a formatted string of performance data
 func (m ResponsePane) renderTiming() string {
-	// Placeholder: This function needs to be implemented
 	total := fmt.Sprintf("Total Duration: %s\n", m.Response.Duration)
 	return total + "\nTiming Content Goes Here\n\n(Not yet implemented)"
 }
