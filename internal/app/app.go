@@ -14,6 +14,7 @@ type Model struct {
 	sidebarPane  *ui.SidebarPane
 	requestPane  ui.RequestPane
 	responsePane ui.ResponsePane
+	headerPane   *ui.Header
 
 	savedRequests []http.Request
 
@@ -29,6 +30,7 @@ func SetupModel(db *storage.SQLiteStorage) Model {
 		requestPane:  ui.SetupRequestPane(db),
 		responsePane: ui.SetupResponsePane(),
 		focusedPanel: utils.SidebarPanel,
+		headerPane:   ui.SetupHeader("VOLT"),
 	}
 	return m
 }
