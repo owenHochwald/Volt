@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/influxdata/tdigest"
 )
 
 type LoadTestConfig struct {
@@ -18,6 +20,7 @@ type LoadTestConfig struct {
 // using t-digest algorithm
 type PercentileCalculator struct {
 	// use github.com/influxdata/tdigest
+	digest *tdigest.TDigest
 }
 
 // LoadTestStats holds aggregated stats about the load test
@@ -54,4 +57,23 @@ type LoadTestResult struct {
 	Stats  *LoadTestStats
 	IsDone bool
 	Err    error
+}
+
+func NewLoadTestStats() *LoadTestStats {
+	return &LoadTestStats{
+		percentiles: &PercentileCalculator{
+			digest: tdigest.NewWithCompression(100),
+		},
+		Errors: make(map[string]int64),
+	}
+}
+
+func RunLoadTest(config *LoadTestConfig, updates chan<- LoadTestStats) error {
+	// worker goroutines with shared work channel
+	// collect stats with sync.RWMutex
+	// cancel with context.Context
+
+	// FUTURE: add rate limiting with time/rate
+	return nil
+
 }
