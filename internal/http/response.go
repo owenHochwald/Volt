@@ -15,7 +15,7 @@ func (r *ResultMsg) String() string {
 		// TODO: add styles
 		return r.Response.Error
 	}
-	return fmt.Sprintf("%s that took: %d ms", r.Response.StatusCode, r.Response.Duration)
+	return fmt.Sprintf("%d that took: %d ms", r.Response.StatusCode, r.Response.Duration)
 }
 
 func (r *Response) ParseContentType() string {
