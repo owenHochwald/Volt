@@ -104,3 +104,35 @@ func TestExtremeLoadTest(t *testing.T) {
 	// check the final snapshot
 	assert.Equal(t, config.TotalRequests, finalStats.CompletedRequests)
 }
+
+func TestRaceSafety(t *testing.T) {
+	RunLoadTest(context.Background(), &LoadTestConfig{}, make(chan LoadTestStats, 10))
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(100 * time.Millisecond)
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	}))
+	defer server.Close()
+
+	config := &LoadTestConfig{
+		Request: &Request{
+			Method: "GET",
+			URL:    server.URL,
+		},
+		Concurrency:   50,
+		TotalRequests: 500,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	updates := make(chan LoadTestStats, 10)
+	go RunLoadTest(ctx, config, updates)
+
+	for stats := range updates {
+		_ = stats.CompletedRequests
+		_ = stats.MinDuration
+		_ = stats.MaxDuration
+	}
+}
