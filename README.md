@@ -19,6 +19,23 @@ Modern API clients are powerful but heavy, slow for developer speed, and unintui
 
 **Developer-Focused**: Clean, syntax-highlighted responses. Request validation with immediate feedback. Persistent storage for your API collections. Built by developers, for developers.
 
+## Performance
+
+Volt is built for raw speed. The core engine is designed to minimize memory allocations and maximize throughput, allowing you to test your services, not your load tester.
+
+### Benchmarks (Apple M4)
+
+| Concurrency | Req/Sec | Latency/Op | Allocations |
+|-------------|---------|------------|-------------|
+| 10          | 141,533 | 7 µs       | 85 B/op     |
+| 50          | 208,035 | 4 µs       | 182 B/op    |
+| **100**     | **213,885** | **4 µs**   | **318 B/op**    |
+| 500         | 92,891  | 10 µs      | 1 KB/op     |
+
+> **Note:** At peak performance (100 workers), Volt can generate **1 Million requests in < 5 seconds**.
+
+*Benchmarks run against a zero-latency local endpoint to measure engine overhead.*
+
 ## Features
 
 **Current**
