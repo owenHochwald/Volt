@@ -1,12 +1,11 @@
-package http_test
+package http
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
-
-	http2 "github.com/owenHochwald/volt/internal/http"
+	//http2 "github.com/owenHochwald/volt/internal/http"
 )
 
 func TestClient_Send(t *testing.T) {
@@ -71,16 +70,16 @@ func TestClient_Send(t *testing.T) {
 			server := httptest.NewServer(tt.mockHandler)
 			defer server.Close()
 
-			client := http2.InitClient(100*time.Millisecond, true)
+			client := InitClient(100*time.Millisecond, true)
 
-			req := &http2.Request{
+			req := &Request{
 				Method:  tt.method,
 				URL:     server.URL,
 				Body:    tt.body,
 				Headers: tt.headers,
 			}
 
-			res := make(chan *http2.Response)
+			res := make(chan *Response)
 			go client.Send(req, res)
 			result := <-res
 
