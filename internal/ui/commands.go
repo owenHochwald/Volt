@@ -62,3 +62,39 @@ func LoadRequestsCmd(db *storage.SQLiteStorage) tea.Cmd {
 		}
 	}
 }
+
+func StartLoadTestCmd(config *http.JobConfig) tea.Cmd {
+	return func() tea.Msg {
+		return http.LoadTestStartMsg{Config: config}
+	}
+}
+
+func WaitForLoadTestUpdatesCmd(updates <-chan *http.LoadTestStats, totalRequests int) tea.Cmd {
+	return func() tea.Msg {
+		stats, ok := <-updates
+		if !ok || stats == nil {
+			// Channel closed, test complete
+			return http.LoadTestCompleteMsg{
+				Stats:    nil,
+				Duration: 0,
+			}
+		}
+
+		if stats.CompletedRequests >= stats.TotalRequests {
+			return http.LoadTestCompleteMsg{
+				Stats:    stats,
+				Duration: stats.EndTime.Sub(stats.StartTime),
+			}
+		}
+
+		progress := 0.0
+		if totalRequests > 0 {
+			progress = float64(stats.CompletedRequests) / float64(totalRequests)
+		}
+
+		return http.LoadTestStatsMsg{
+			Stats:    stats,
+			Progress: progress,
+		}
+	}
+}

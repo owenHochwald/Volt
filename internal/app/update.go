@@ -60,6 +60,43 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.sidebarPane = sidebarModel.(*ui.SidebarPane)
 		return m, cmd
 
+	case http.LoadTestStartMsg:
+		updates := make(chan *http.LoadTestStats, 100)
+		m.loadTestUpdates = updates
+
+		// start load test in background
+		go func() {
+			msg.Config.Init()
+			msg.Config.Run(updates)
+		}()
+
+		m.responsePane.ClearLoadTestStats()
+		return m, ui.WaitForLoadTestUpdatesCmd(updates, msg.Config.TotalRequests)
+
+	case http.LoadTestStatsMsg:
+		m.responsePane.SetLoadTestStats(msg.Stats)
+
+		if m.loadTestUpdates != nil {
+			return m, ui.WaitForLoadTestUpdatesCmd(m.loadTestUpdates, msg.Stats.TotalRequests)
+		}
+		return m, nil
+
+	case http.LoadTestCompleteMsg:
+		// final update
+		m.loadTestUpdates = nil
+		if msg.Stats != nil {
+			m.responsePane.SetLoadTestStats(msg.Stats)
+		}
+		m.requestPane.ExitLoadTestMode()
+		m.focusedPanel = utils.ResponsePanel // Switch focus to results
+		return m, nil
+
+	case http.LoadTestErrorMsg:
+		m.loadTestUpdates = nil
+		m.requestPane.ExitLoadTestMode()
+		// TODO: Display error message
+		return m, nil
+
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
 		m.sidebarPane.SetSize(m.width/2, (m.height-15)/2)

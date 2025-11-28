@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/alecthomas/chroma/v2/quick"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -21,6 +22,8 @@ var (
 
 type ResponsePane struct {
 	Response      *http.Response
+	LoadTestStats *http.LoadTestStats
+	isLoadTest    bool
 	height, width int
 
 	viewport  viewport.Model
@@ -53,6 +56,7 @@ func highlightContent(content, lexer string) string {
 
 func (m *ResponsePane) SetResponse(response *http.Response) {
 	m.Response = response
+	m.isLoadTest = false
 
 	if m.Response != nil {
 
@@ -87,6 +91,18 @@ func (m *ResponsePane) SetResponse(response *http.Response) {
 	}
 }
 
+func (m *ResponsePane) SetLoadTestStats(stats *http.LoadTestStats) {
+	m.LoadTestStats = stats
+	m.isLoadTest = true
+	m.activeTab = 0 // Reset to Overview tab
+	m.updateViewportForActiveTab()
+}
+
+func (m *ResponsePane) ClearLoadTestStats() {
+	m.LoadTestStats = nil
+	m.isLoadTest = false
+}
+
 func (m *ResponsePane) SetHeight(height int) {
 	m.height = height
 	m.viewport.Height = height
@@ -98,6 +114,11 @@ func (m *ResponsePane) SetWidth(width int) {
 }
 
 func (m *ResponsePane) updateViewportForActiveTab() {
+	if m.isLoadTest {
+		m.updateLoadTestTabContent()
+		return
+	}
+
 	if m.Response == nil {
 		return
 	}
@@ -141,6 +162,24 @@ func (m *ResponsePane) updateViewportForActiveTab() {
 	m.viewport.SetContent(content)
 }
 
+func (m *ResponsePane) updateLoadTestTabContent() {
+	if m.LoadTestStats == nil {
+		m.viewport.SetContent("No data")
+		return
+	}
+
+	var content string
+	switch m.activeTab {
+	case 0:
+		content = m.renderLoadTestOverview()
+	case 1:
+		content = m.renderLoadTestLatency()
+	case 2:
+		content = m.renderLoadTestErrors()
+	}
+	m.viewport.SetContent(content)
+}
+
 func (m ResponsePane) renderHeaderBar() string {
 	statusStyle := utils.MapStatusCodeToColor(m.Response.StatusCode)
 	status := statusStyle.Render(m.Response.Status)
@@ -155,6 +194,10 @@ func (m ResponsePane) renderHeaderBar() string {
 }
 
 func (m ResponsePane) View() string {
+	if m.isLoadTest {
+		return m.renderLoadTestView()
+	}
+
 	if m.Response == nil {
 		return "Make a request to see the response here!"
 	}
@@ -174,6 +217,48 @@ func (m ResponsePane) View() string {
 	tabContent := m.renderActiveTabContent()
 
 	return lipgloss.JoinVertical(lipgloss.Left, statusBar, tabHeader, tabContent)
+}
+
+func (m ResponsePane) renderLoadTestView() string {
+	if m.LoadTestStats == nil {
+		return "No load test data"
+	}
+
+	var b strings.Builder
+
+	// Status line
+	status := "Load Test "
+	if m.LoadTestStats.EndTime.IsZero() {
+		status += "In Progress..."
+	} else {
+		status += "Complete"
+	}
+	statusBar := lipgloss.NewStyle().
+		Background(lipgloss.Color("62")).
+		Foreground(lipgloss.Color("230")).
+		Padding(0, 1).
+		Render(status)
+	b.WriteString(statusBar)
+	b.WriteString("\n")
+
+	// Tab header (reuse existing tab rendering for load test tabs)
+	tabs := []string{"[1] Overview", "[2] Latency", "[3] Errors"}
+	renderedTabs := []string{}
+	for i, tab := range tabs {
+		if i == m.activeTab {
+			renderedTabs = append(renderedTabs, activeTab.Render(tab))
+		} else {
+			renderedTabs = append(renderedTabs, inactiveTab.Render(tab))
+		}
+	}
+	tabHeader := lipgloss.JoinHorizontal(lipgloss.Left, renderedTabs...)
+	b.WriteString(tabHeader)
+	b.WriteString("\n")
+
+	// Tab content
+	b.WriteString(m.viewport.View())
+
+	return b.String()
 }
 
 func (m *ResponsePane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -243,6 +328,79 @@ func (m ResponsePane) renderActiveTabContent() string {
 	default:
 		return "Something went wrong."
 	}
+}
+
+func (m ResponsePane) renderLoadTestOverview() string {
+	stats := m.LoadTestStats
+	if stats == nil {
+		return "No data"
+	}
+
+	var b strings.Builder
+
+	successCount := stats.CompletedRequests - stats.FailedRequests
+	successRate := 0.0
+	if stats.CompletedRequests > 0 {
+		successRate = float64(successCount) / float64(stats.CompletedRequests) * 100
+	}
+
+	b.WriteString(fmt.Sprintf("Requests:       %d / %d\n", stats.CompletedRequests, stats.TotalRequests))
+	b.WriteString(fmt.Sprintf("Success:        %d (%.1f%%)\n", successCount, successRate))
+	b.WriteString(fmt.Sprintf("Failed:         %d (%.1f%%)\n", stats.FailedRequests, 100-successRate))
+	b.WriteString("\n")
+
+	// Throughput
+	elapsed := time.Since(stats.StartTime)
+	if !stats.EndTime.IsZero() {
+		elapsed = stats.EndTime.Sub(stats.StartTime)
+	}
+	throughput := 0.0
+	if elapsed.Seconds() > 0 {
+		throughput = float64(stats.CompletedRequests) / elapsed.Seconds()
+	}
+	b.WriteString(fmt.Sprintf("Throughput:     %.1f req/s\n", throughput))
+	b.WriteString(fmt.Sprintf("Duration:       %s\n", elapsed.Round(time.Millisecond)))
+
+	return b.String()
+}
+
+func (m ResponsePane) renderLoadTestLatency() string {
+	stats := m.LoadTestStats
+	if stats == nil || stats.Percentiles == nil {
+		return "No latency data"
+	}
+
+	var b strings.Builder
+	b.WriteString("Latency Distribution:\n\n")
+	b.WriteString(fmt.Sprintf("  Min:    %s\n", stats.MinDuration.Round(time.Millisecond)))
+	b.WriteString(fmt.Sprintf("  p50:    %s\n", stats.Percentiles.Percentile(50).Round(time.Millisecond)))
+	b.WriteString(fmt.Sprintf("  p90:    %s\n", stats.Percentiles.Percentile(90).Round(time.Millisecond)))
+	b.WriteString(fmt.Sprintf("  p95:    %s\n", stats.Percentiles.Percentile(95).Round(time.Millisecond)))
+	b.WriteString(fmt.Sprintf("  p99:    %s\n", stats.Percentiles.Percentile(99).Round(time.Millisecond)))
+	b.WriteString(fmt.Sprintf("  Max:    %s\n", stats.MaxDuration.Round(time.Millisecond)))
+
+	return b.String()
+}
+
+func (m ResponsePane) renderLoadTestErrors() string {
+	stats := m.LoadTestStats
+	if stats == nil {
+		return "No error data"
+	}
+
+	var b strings.Builder
+
+	if len(stats.Errors) == 0 {
+		b.WriteString("No errors encountered!\n")
+		return b.String()
+	}
+
+	b.WriteString("Error Breakdown:\n\n")
+	for code, count := range stats.Errors {
+		b.WriteString(fmt.Sprintf("  HTTP %s: %d occurrences\n", code, count))
+	}
+
+	return b.String()
 }
 
 func (m ResponsePane) renderHeaders() string {

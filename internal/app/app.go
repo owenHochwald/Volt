@@ -21,6 +21,8 @@ type Model struct {
 	focusedPanel utils.Panel
 
 	width, height int
+
+	loadTestUpdates <-chan *http.LoadTestStats
 }
 
 func SetupModel(db *storage.SQLiteStorage) Model {
