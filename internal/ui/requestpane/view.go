@@ -116,14 +116,5 @@ func (m RequestPane) View() string {
 		helpText,
 	)
 
-	// Apply yellow border if in load test mode
-	//if m.LoadTestMode {
-	//	borderStyle := lipgloss.NewStyle().
-	//		BorderStyle(lipgloss.RoundedBorder()).
-	//		BorderForeground(lipgloss.Color("226")). // Yellow
-	//		Padding(0, 1)
-	//	return borderStyle.Render(finalContent)
-	//}
-
 	return finalContent
 }

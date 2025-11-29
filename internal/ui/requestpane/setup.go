@@ -14,7 +14,7 @@ func SetupRequestPane(db *storage.SQLiteStorage) RequestPane {
 	methodSelector := ui.NewMethodSelector()
 
 	// Use factories for text inputs
-	urlInput := NewURLInput()
+	urlInput := NewURLInput(db)
 	nameInput := NewNameInput()
 
 	// Create text areas
