@@ -6,6 +6,18 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
+type HeaderEntry struct {
+	Key   []byte
+	Value []byte
+}
+
+type FastRequest struct {
+	Method  []byte
+	URL     []byte
+	Headers []HeaderEntry
+	Body    []byte
+}
+
 type FastClient struct {
 	client  *fasthttp.Client
 	timeout time.Duration
@@ -24,39 +36,29 @@ func NewFastClient(timeout time.Duration, s *JobConfig) *FastClient {
 	}
 }
 
-func (f *FastClient) Do(req *Request) (*JobResult, error) {
-	r := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(r)
+func (f *FastClient) Do(
+	fr *FastRequest,
+	req *fasthttp.Request,
+	res *fasthttp.Response,
+) (status int, contentLen int64, err error) {
+	req.Reset()
+	res.Reset()
 
-	// set specifics of the request
-	r.SetRequestURI(req.URL)
-	r.Header.SetMethod(req.Method)
-	for k, v := range req.Headers {
-		r.Header.Set(k, v)
+	// zero allocation setters
+	req.Header.SetMethodBytes(fr.Method)
+	req.SetRequestURIBytes(fr.URL)
+	for _, entry := range fr.Headers {
+
+		req.Header.SetBytesKV(entry.Key, entry.Value)
 	}
-	if req.Body != "" {
-		r.SetBodyString(req.Body)
+	if fr.Body != nil {
+		req.SetBodyRaw(fr.Body)
 	}
 
-	res := fasthttp.AcquireResponse()
-	defer fasthttp.ReleaseResponse(res)
-
-	start := time.Now()
-	err := f.client.DoTimeout(r, res, f.timeout)
-	totalDuration := time.Since(start)
-
+	err = f.client.DoTimeout(req, res, f.timeout)
 	if err != nil {
-		return &JobResult{
-			err:      err,
-			duration: totalDuration,
-		}, err
+		return 0, 0, err
 	}
 
-	return &JobResult{
-		err:           nil,
-		statusCode:    res.StatusCode(),
-		duration:      totalDuration,
-		contentLength: int64(res.Header.ContentLength()),
-	}, nil
-
+	return res.StatusCode(), int64(res.Header.ContentLength()), nil
 }
