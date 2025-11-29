@@ -12,6 +12,11 @@ type LoadTestMode struct{}
 func (ltm *LoadTestMode) HandleInput(m *RequestPane, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
+	// Alt + Enter submits the request from any focus point
+	if msg.String() == "alt+enter" {
+		return ltm.handleSubmit(m, msg)
+	}
+
 	switch FieldIndex(m.FocusManager.CurrentIndex()) {
 	case FieldMethodSelector:
 		switch msg.String() {
@@ -62,7 +67,7 @@ func (ltm *LoadTestMode) HandleInput(m *RequestPane, msg tea.KeyMsg) (tea.Model,
 // handleSubmit handles the submit button in load test mode
 func (ltm *LoadTestMode) handleSubmit(m *RequestPane, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
-	case tea.KeyEnter.String():
+	case tea.KeyEnter.String(), "alt+enter":
 		if m.RequestInProgress {
 			return m, nil
 		}

@@ -10,6 +10,11 @@ type NormalMode struct{}
 
 // HandleInput handles keyboard input in normal mode
 func (nm *NormalMode) HandleInput(m *RequestPane, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// Alt + Enter submits the request from any focus point
+	if msg.String() == "alt+enter" {
+		return nm.handleSubmit(m, msg)
+	}
+
 	switch FieldIndex(m.FocusManager.CurrentIndex()) {
 	case FieldMethodSelector:
 		switch msg.String() {
@@ -43,7 +48,7 @@ func (nm *NormalMode) HandleInput(m *RequestPane, msg tea.KeyMsg) (tea.Model, te
 // handleSubmit handles the submit button in normal mode
 func (nm *NormalMode) handleSubmit(m *RequestPane, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
-	case tea.KeyEnter.String():
+	case tea.KeyEnter.String(), "alt+enter":
 		if m.RequestInProgress {
 			return m, nil
 		}
