@@ -66,7 +66,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// start load test in background
 		go func() {
-			msg.Config.Init()
 			msg.Config.Run(updates)
 		}()
 

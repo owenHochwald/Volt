@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/influxdata/tdigest"
+	"github.com/valyala/fasthttp"
 )
 
 // largest size of the buffer for the result channel
@@ -47,16 +48,30 @@ type LoadTestStats struct {
 	mu sync.RWMutex // protects above fields from concurrent access
 }
 
-type JobResult struct {
-	err           error
-	statusCode    int
-	duration      time.Duration
-	contentLength int64
+// workerStats holds per-worker local statistics (no mutex needed)
+type workerStats struct {
+	requests uint64 // total requests by this worker
+	failures uint64 // failed requests
+
+	// Sampled latency tracking (1/256 requests)
+	sampledCount uint64
+	sampledMin   uint64 // nanoseconds
+	sampledMax   uint64 // nanoseconds
+	sampledTotal uint64 // sum for average calculation
+
+	errorCodes map[int]uint64
+}
+
+// workerStatsMsg is sent from workers to aggregator
+type workerStatsMsg struct {
+	workerID int
+	stats    workerStats
 }
 
 type JobConfig struct {
 	// Request config
-	Request *Request // base request to send
+	Request     *Request // base request to send
+	FastRequest *FastRequest
 
 	// Load parameters
 	Concurrency   int           // number of concurrent requests
@@ -66,19 +81,12 @@ type JobConfig struct {
 	QPS           float64       // rate limit for queries per second
 
 	// Internal state
-	results chan *JobResult
-	stopCh  chan struct{}
-	start   time.Time
-	once    sync.Once
-	stats   *LoadTestStats
-}
-
-// Init creates the singleton JobConfig internal representation
-func (s *JobConfig) Init() {
-	s.once.Do(func() {
-		s.results = make(chan *JobResult, min(s.Concurrency*1000, maxResult))
-		s.stopCh = make(chan struct{}, s.Concurrency)
-	})
+	client        *FastClient
+	workerStatsCh chan workerStatsMsg
+	stopCh        chan struct{}
+	start         time.Time
+	once          sync.Once
+	stats         *LoadTestStats
 }
 
 // NewLoadTestStats creates a new LoadTestStats instance
@@ -96,70 +104,50 @@ func NewLoadTestStats(totalRequests int) *LoadTestStats {
 
 // Run makes all the requests and streams results
 func (s *JobConfig) Run(updates chan<- *LoadTestStats) {
-	s.Init()
 	s.start = time.Now()
 	s.stats = NewLoadTestStats(s.TotalRequests)
+	s.FastRequest = compileRequest(s.Request)
+	s.client = NewFastClient(s.Timeout, s)
 
-	// collect results in the background
-	go s.collectResults(updates)
+	// aggregation channel (buffered for batch flushes)
+	s.workerStatsCh = make(chan workerStatsMsg, s.Concurrency*4)
 
+	s.stopCh = make(chan struct{}, s.Concurrency)
+
+	// Aggregate in background
+	go s.aggregateStats(updates)
+
+	// Run workers
 	s.runWorkers()
-	s.finish()
+
+	// Signal completion
+	close(s.workerStatsCh)
 }
 
-func (s *JobConfig) Stop() {
-	for range s.Concurrency {
-		s.stopCh <- struct{}{}
+func compileRequest(req *Request) *FastRequest {
+	fastReq := &FastRequest{
+		Method:  []byte(req.Method),
+		URL:     []byte(req.URL),
+		Headers: make([]HeaderEntry, 0, len(req.Headers)),
 	}
-}
 
-func (s *JobConfig) Finish() {
-	close(s.results)
-	//TODO: finish implementation
-	// total := time.Now().Sub(s.start)
-
-	// await the tdigest report being completed
-	// <-s
-	// finalize with the total time
-}
-
-func (s *JobConfig) makeRequest(c *FastClient) {
-	// res contains metrics data
-	res, err := c.Do(s.Request)
-	if err != nil {
-		s.results <- &JobResult{err: err}
-		return
+	for k, v := range req.Headers {
+		fastReq.Headers = append(fastReq.Headers, HeaderEntry{
+			Key:   []byte(k),
+			Value: []byte(v),
+		})
 	}
-	s.results <- res
-}
 
-func (p *PercentileCalculator) Add(duration time.Duration) {
-	p.digest.Add(float64(duration.Milliseconds()), 1)
+	if len(req.Body) > 0 {
+		fastReq.Body = []byte(req.Body)
+	}
+
+	return fastReq
 }
 
 func (p *PercentileCalculator) Percentile(percentile float64) time.Duration {
 	ms := p.digest.Quantile(percentile / 100.0)
 	return time.Duration(ms) * time.Millisecond
-}
-
-func (s *LoadTestStats) RecordResult(result JobResult) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.CompletedRequests++
-	if result.err != nil {
-		s.FailedRequests++
-		if result.statusCode > 0 {
-			statusString := strconv.Itoa(result.statusCode)
-			s.Errors[statusString]++
-		}
-	}
-
-	s.MinDuration = min(s.MinDuration, result.duration)
-	s.MaxDuration = max(s.MaxDuration, result.duration)
-	s.TotalDuration += result.duration
-
-	s.Percentiles.Add(result.duration)
 }
 
 func (s *LoadTestStats) GetSnapshot() LoadTestStats {
@@ -189,71 +177,160 @@ func (s *LoadTestStats) GetSnapshot() LoadTestStats {
 	}
 }
 
-func (s *JobConfig) runWorker(client *FastClient, wg *sync.WaitGroup) {
+func (s *JobConfig) runWorker(workerID int, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	var ticker *time.Ticker
+	// Worker owns these for its ENTIRE lifetime
+	req := &fasthttp.Request{}
+	res := &fasthttp.Response{}
+
+	// Local stats
+	var stats workerStats
+	stats.errorCodes = make(map[int]uint64, 8)
+
+	// QPS throttling setup
+	var qpsTicker *time.Ticker
 	var throttle <-chan time.Time
 	if s.QPS > 0 {
-		ticker = time.NewTicker(time.Duration(1e6/s.QPS) * time.Microsecond)
-		defer ticker.Stop()
-		throttle = ticker.C
+		qpsTicker = time.NewTicker(time.Duration(1e6/s.QPS) * time.Microsecond)
+		defer qpsTicker.Stop()
+		throttle = qpsTicker.C
 	}
 
 	requestsPerWorker := s.TotalRequests / s.Concurrency
 
 	for i := 0; i < requestsPerWorker; i++ {
+		// QPS throttling
 		if s.QPS > 0 {
 			<-throttle
 		}
+
+		// Check for stop signal
 		select {
 		case <-s.stopCh:
-			// halt the load test if a stop result is detected
+			s.flushWorkerStats(workerID, &stats)
 			return
 		default:
-			s.makeRequest(client)
 		}
+
+		// Latency sampling: 1 out of every 256 requests (cheap bitwise check)
+		sample := (i & 0xFF) == 0
+
+		var start time.Time
+		if sample {
+			start = time.Now()
+		}
+
+		status, _, err := s.client.Do(s.FastRequest, req, res)
+
+		if sample {
+			elapsed := uint64(time.Since(start).Nanoseconds())
+			stats.sampledCount++
+
+			if stats.sampledMin == 0 || elapsed < stats.sampledMin {
+				stats.sampledMin = elapsed
+			}
+			if elapsed > stats.sampledMax {
+				stats.sampledMax = elapsed
+			}
+			stats.sampledTotal += elapsed
+		}
+
+		stats.requests++
+		if err != nil {
+			stats.failures++
+			if status > 0 {
+				stats.errorCodes[status]++
+			}
+		}
+
+		// Flush every 256 requests
+		if (i&0xFF) == 0 && i > 0 {
+			s.flushWorkerStats(workerID, &stats)
+			for k := range stats.errorCodes {
+				delete(stats.errorCodes, k)
+			}
+			stats.requests = 0
+			stats.failures = 0
+			stats.sampledCount = 0
+			stats.sampledMin = 0
+			stats.sampledMax = 0
+			stats.sampledTotal = 0
+		}
+	}
+
+	s.flushWorkerStats(workerID, &stats)
+}
+
+// flushWorkerStats sends local worker stats to aggregator (non-blocking)
+func (s *JobConfig) flushWorkerStats(workerID int, stats *workerStats) {
+	// Drop if aggregator is behind
+	select {
+	case s.workerStatsCh <- workerStatsMsg{workerID: workerID, stats: *stats}:
+	default:
+		// Skip this flush if aggregator channel is full
 	}
 }
 
-func (s *JobConfig) collectResults(updates chan<- *LoadTestStats) {
+func (s *JobConfig) aggregateStats(updates chan<- *LoadTestStats) {
 	ticker := time.NewTicker(300 * time.Millisecond)
 	defer ticker.Stop()
 
 	for {
 		select {
-		case result, ok := <-s.results:
+		case msg, ok := <-s.workerStatsCh:
 			if !ok {
+				s.stats.EndTime = time.Now()
 				snapshot := s.stats.GetSnapshot()
 				updates <- &snapshot
 				close(updates)
 				return
 			}
-			// actually update the t-digest
-			s.stats.RecordResult(*result)
+
+			s.stats.mu.Lock()
+			s.stats.CompletedRequests += int(msg.stats.requests)
+			s.stats.FailedRequests += int(msg.stats.failures)
+
+			// Update latency from samples
+			if msg.stats.sampledCount > 0 {
+				minDur := time.Duration(msg.stats.sampledMin)
+				maxDur := time.Duration(msg.stats.sampledMax)
+
+				if s.stats.MinDuration == 0 || minDur < s.stats.MinDuration {
+					s.stats.MinDuration = minDur
+				}
+				if maxDur > s.stats.MaxDuration {
+					s.stats.MaxDuration = maxDur
+				}
+
+				s.stats.TotalDuration += time.Duration(msg.stats.sampledTotal)
+
+				// Add samples to tdigest (average of worker's samples)
+				avgLatency := float64(msg.stats.sampledTotal) / float64(msg.stats.sampledCount)
+				s.stats.Percentiles.digest.Add(avgLatency/1e6, float64(msg.stats.sampledCount))
+			}
+
+			// Merge error codes
+			for code, count := range msg.stats.errorCodes {
+				s.stats.Errors[strconv.Itoa(code)] += int64(count)
+			}
+			s.stats.mu.Unlock()
 
 		case <-ticker.C:
+			// Send snapshot to UI every 300ms
 			snapshot := s.stats.GetSnapshot()
 			updates <- &snapshot
 		}
-
 	}
 }
 
 func (s *JobConfig) runWorkers() {
 	var wg sync.WaitGroup
 
-	// Use optimized FastClient constructor
-	client := NewFastClient(s.Timeout, s)
-
 	for i := 0; i < s.Concurrency; i++ {
 		wg.Add(1)
-		go s.runWorker(client, &wg)
+		go s.runWorker(i, &wg)
 	}
 
 	wg.Wait()
-}
-
-func (s *JobConfig) finish() {
-	close(s.results)
 }
