@@ -9,18 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestJobConfig_Init(t *testing.T) {
-	config := &JobConfig{
-		Concurrency:   10,
-		TotalRequests: 100,
-	}
-
-	config.Init()
-
-	assert.NotNil(t, config.results, "results channel not initialized")
-	assert.NotNil(t, config.stopCh, "stopCh channel not initialized")
-}
-
 func TestJobConfig_BuildWithRequest(t *testing.T) {
 	request := NewDefaultRequest()
 	request.URL = "http://localhost:8080"
@@ -33,9 +21,6 @@ func TestJobConfig_BuildWithRequest(t *testing.T) {
 		QPS:           0,
 		Timeout:       5 * time.Second,
 	}
-
-	config.Init()
-	assert.NotNil(t, config.results)
 
 	if config.Request == nil {
 		t.Fatal("Request is nil")
@@ -64,8 +49,6 @@ func TestJobConfig_RunBasic(t *testing.T) {
 		TotalRequests: 10,
 		Timeout:       5 * time.Second,
 	}
-
-	config.Init()
 
 	updates := make(chan *LoadTestStats, 10)
 
@@ -124,7 +107,6 @@ func TestJobConfig_RunHard(t *testing.T) {
 		TotalRequests: expectedRequests,
 		Timeout:       5 * time.Second,
 	}
-	config.Init()
 	updates := make(chan *LoadTestStats, 10)
 
 	go func() {
@@ -176,19 +158,4 @@ func TestNewLoadTestStats(t *testing.T) {
 	if stats.Errors == nil {
 		t.Fatal("Errors map not initialized")
 	}
-}
-
-func TestJobConfig_InitCalledMultipleTimes(t *testing.T) {
-	config := &JobConfig{
-		Concurrency:   10,
-		TotalRequests: 100,
-	}
-
-	config.Init()
-	results1 := config.results
-
-	config.Init()
-	results2 := config.results
-
-	assert.Equal(t, results1, results2, "Init() should return the same channel")
 }
