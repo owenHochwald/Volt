@@ -5,7 +5,7 @@ on:
   push:
     # run only against release tags
     tags:
-      - "release"
+      - "v*"
 
 permissions:
   contents: write
