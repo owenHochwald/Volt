@@ -39,14 +39,32 @@ func NewConfiguredTextInput(config TextInputConfig) textinput.Model {
 
 // NewURLInput creates a pre-configured URL input field
 func NewURLInput(db *storage.SQLiteStorage) textinput.Model {
-	var urls []string
-	urls, err := db.GetAllURLs()
+	urls := []string{"http://", "https://"}
+
+	dbUrls, err := db.GetAllURLs()
 	if err != nil {
 		urls = []string{}
 	}
+	urls = append(urls, dbUrls...)
+
+	// Add additional common URLs for quick access
+	urls = append(
+		urls,
+		"http://localhost:3000/health",
+		"http://localhost:3000/login",
+		"http://localhost:3000/register",
+		"http://localhost:3000/logout",
+		"http://localhost:3000/me",
+		"http://localhost:3000/users/1",
+		"http://localhost:3000/posts",
+		"http://localhost:3000/posts/42",
+		"http://localhost:3000/upload",
+		"http://localhost:3000/settings",
+		"https://httpbin.org/anything",
+	)
 
 	ti := NewConfiguredTextInput(TextInputConfig{
-		Value:           "http://localhost:",
+		Value:           "h",
 		CharLimit:       40,
 		Width:           60,
 		Suggestions:     urls,

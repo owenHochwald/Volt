@@ -96,7 +96,7 @@ func (m RequestPane) View() string {
 			button,
 		)
 
-		helpText = ui.HelpStyle.Render("alt/opt+l: load test mode • tab/↑/↓: navigate • ←/→ or h/l: change method • enter: send • ctrl+s: save")
+		helpText = ui.HelpStyle.Render("alt/opt+l: load test mode • tab/↑/↓: navigate • ←/→ or h/l: change method • alt/opt+enter: send • enter/→: accept URL • ctrl+s: save")
 	}
 
 	var spacing string
