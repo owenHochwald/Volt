@@ -189,8 +189,7 @@ Future versions will support configuration files for themes, keybindings, and de
 
 ## Contributing
 
-Volt is in active development. Contributions, bug reports, and feature requests are welcome.
-
+Volt is licensed under the Mozilla Public License 2.0 (MPL 2.0). See the [LICENSE](./LICENSE) file for details.
 ## License
 
 MIT License - see LICENSE file for details.
