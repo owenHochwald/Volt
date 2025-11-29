@@ -34,6 +34,8 @@ func NewConfiguredTextInput(config TextInputConfig) textinput.Model {
 
 // NewURLInput creates a pre-configured URL input field
 func NewURLInput() textinput.Model {
+	// call repository method to get suggestions (all previous urls)!
+
 	return NewConfiguredTextInput(TextInputConfig{
 		Value:     "http://localhost:",
 		CharLimit: 40,

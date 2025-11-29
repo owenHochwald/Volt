@@ -30,8 +30,6 @@ func (m RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyCtrlS.String(), tea.KeyShiftDown.String():
 			m.syncRequest()
 			return m, ui.SaveRequestCmd(m.DB, m.Request)
-		case tea.KeyCtrlC.String(), "q":
-			return m, tea.Quit
 		case tea.KeyTab.String(), tea.KeyDown.String():
 			m.FocusManager.Next()
 			return m, nil

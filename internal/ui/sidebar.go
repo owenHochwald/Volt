@@ -118,7 +118,7 @@ func (s *SidebarPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (s *SidebarPane) View() string {
-	helpText := HelpStyle.Render("n: new • d: delete • enter: send •/: filter")
+	helpText := HelpStyle.Render("d: delete • enter: send •/: filter")
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,

@@ -19,7 +19,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		default:
 		}
 		switch msg.String() {
-		case tea.KeyCtrlC.String(), "q":
+		case tea.KeyCtrlC.String():
 			return m, tea.Quit
 		case tea.KeyEscape.String():
 			if m.focusedPanel == utils.RequestPanel {
