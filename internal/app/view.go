@@ -13,14 +13,23 @@ func (m Model) View() string {
 	mainWidth := m.width - sidebarWidth - 4
 	mainHeight := contentHeight - 2
 
-	requestHeight := int(float64(mainHeight)/2.2) - 9
-	responseHeight := int(float64(mainHeight)/2.2) - 1
+	requestHeight := int(float64(mainHeight)/2.2) - 10
+	responseHeight := int(float64(mainHeight)/2.2) - 3
 
 	sidebar := m.sidebarView(mainHeight, sidebarWidth)
 
-	request := ui.ApplyFocus(ui.RequestStyle, m.focusedPanel == 1).Width(mainWidth - 10).
-		Height(requestHeight).
-		Render(m.requestView(requestHeight))
+	// Conditional rendering for custom request pane border color
+	var request string
+	if m.requestPane.LoadTestMode {
+		// Load test style already has yellow border, background, and bold - don't apply focus
+		request = ui.LoadTestBorderStyle.Width(mainWidth - 10).
+			Height(requestHeight).
+			Render(m.requestView(requestHeight))
+	} else {
+		request = ui.ApplyFocus(ui.RequestStyle, m.focusedPanel == 1).Width(mainWidth - 10).
+			Height(requestHeight).
+			Render(m.requestView(requestHeight))
+	}
 
 	response := ui.ApplyFocus(ui.ResponseStyle, m.focusedPanel == 2).Width(mainWidth - 10).
 		Height(responseHeight).
@@ -45,6 +54,7 @@ func (m Model) sidebarView(height, width int) string {
 
 func (m Model) requestView(height int) string {
 	m.requestPane.SetFocused(m.focusedPanel == utils.RequestPanel)
+	//m.requestPane.LoadTestMode
 	m.requestPane.SetHeight(height)
 
 	return m.requestPane.View()
