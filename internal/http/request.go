@@ -48,7 +48,7 @@ func NewDefaultRequest() *Request {
 	return &Request{
 		Name:    "None",
 		Method:  GET,
-		URL:     "http://localhost:",
+		URL:     "https://:",
 		Headers: make(map[string]string),
 		Body:    "",
 	}

@@ -53,6 +53,13 @@ var (
 
 	ResponseStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder())
+
+	LabelStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("241"))
+
+	LoadTestBorderStyle = lipgloss.NewStyle().
+				BorderStyle(lipgloss.RoundedBorder()).
+				BorderForeground(lipgloss.Color("226")) // Yellow
 )
 
 func ApplyFocus(style lipgloss.Style, focus bool) lipgloss.Style {

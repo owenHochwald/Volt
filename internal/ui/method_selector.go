@@ -11,7 +11,8 @@ import (
 var (
 	methodStyleBase = lipgloss.NewStyle().
 			Padding(0, 1).
-			Bold(true)
+			Bold(true).
+			Border(lipgloss.NormalBorder())
 
 	getMethodStyle    = methodStyleBase.Foreground(lipgloss.Color("42"))  // Green
 	postMethodStyle   = methodStyleBase.Foreground(lipgloss.Color("214")) // Orange
@@ -27,6 +28,7 @@ type MethodSelector struct {
 }
 
 func (m *MethodSelector) Focus() tea.Cmd {
+
 	m.focused = true
 	return nil
 }

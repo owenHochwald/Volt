@@ -94,7 +94,6 @@ func (s *SQLiteStorage) Save(request *http.Request) error {
 	}
 	request.ID = id
 	return nil
-
 }
 
 func (s *SQLiteStorage) Load() ([]http.Request, error) {
@@ -152,4 +151,23 @@ func (s *SQLiteStorage) Delete(id int64) error {
 		return fmt.Errorf("request not found: %d", id)
 	}
 	return nil
+}
+
+func (s *SQLiteStorage) GetAllURLs() ([]string, error) {
+	q := `SELECT DISTINCT url FROM requests`
+	rows, err := s.db.Query(q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var urls []string
+	for rows.Next() {
+		var url string
+		if err := rows.Scan(&url); err != nil {
+			return nil, err
+		}
+		urls = append(urls, url)
+	}
+	return urls, nil
 }

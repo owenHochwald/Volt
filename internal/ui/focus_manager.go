@@ -47,3 +47,21 @@ func NewFocusManager(components []Focusable) *FocusManager {
 
 	return fm
 }
+
+// NewFocusManagerWithIndex creates a FocusManager starting at a specific index
+func NewFocusManagerWithIndex(components []Focusable, index int) *FocusManager {
+	if index < 0 || index >= len(components) {
+		index = 0
+	}
+
+	fm := &FocusManager{
+		currentIndex: index,
+		components:   components,
+	}
+
+	if len(fm.components) > 0 {
+		components[index].Focus()
+	}
+
+	return fm
+}

@@ -8,4 +8,5 @@ type Storage interface {
 	Save(requests *http.Request) error
 	Load() ([]http.Request, error)
 	Delete(id int64) error
+	GetAllURLs() ([]string, error)
 }

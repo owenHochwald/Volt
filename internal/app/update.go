@@ -4,6 +4,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/owenHochwald/volt/internal/http"
 	"github.com/owenHochwald/volt/internal/ui"
+	"github.com/owenHochwald/volt/internal/ui/requestpane"
 	"github.com/owenHochwald/volt/internal/utils"
 )
 
@@ -18,7 +19,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		default:
 		}
 		switch msg.String() {
-		case tea.KeyCtrlC.String(), "q":
+		case tea.KeyCtrlC.String():
 			return m, tea.Quit
 		case tea.KeyEscape.String():
 			if m.focusedPanel == utils.RequestPanel {
@@ -110,7 +111,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.requestPane.SetFocused(true)
 		var requestPaneModel tea.Model
 		requestPaneModel, cmd = m.requestPane.Update(msg)
-		m.requestPane = requestPaneModel.(ui.RequestPane)
+		m.requestPane = requestPaneModel.(requestpane.RequestPane)
 		return m, cmd
 	} else if m.focusedPanel == utils.ResponsePanel {
 		var responsePaneModel tea.Model
