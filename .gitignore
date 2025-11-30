@@ -1,5 +1,6 @@
 # Binaries
 bin/
+dist/
 *.exe
 hitt
 volt
