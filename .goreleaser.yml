@@ -48,14 +48,17 @@ changelog:
       - '^test:'
       - '^chore:'
 
-#brews:
-#  - name: volt
-#    repository:
-#      owner: owenHochwald
-#      name: homebrew-volt
-#    homepage: https://github.com/owenHochwald/Volt
-#    description: "High-performance, concurrent, terminal-based HTTP client"
-#    license: "MPL 2.0"
+brews:
+  - name: volt
+    repository:
+      owner: owenHochwald
+      name: homebrew-volt
+      token: "{{ .Env.GITHUB_TOKEN }}"
+    homepage: https://github.com/owenHochwald/Volt
+    description: "High-performance, concurrent, terminal-based HTTP client"
+    license: "MPL 2.0"
+    install: |
+      bin.install "volt"
 
 release:
   draft: true
