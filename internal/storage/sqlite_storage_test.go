@@ -3,6 +3,8 @@ package storage
 import (
 	"testing"
 
+	_ "modernc.org/sqlite"
+
 	"github.com/alecthomas/assert/v2"
 	"github.com/owenHochwald/volt/internal/http"
 )

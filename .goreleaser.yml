@@ -10,7 +10,7 @@ builds:
     binary: volt
     main: ./cmd/volt/main.go
     env:
-      - CGO_ENABLED=1
+      - CGO_ENABLED=0
     goos:
       - linux
       - darwin
@@ -21,7 +21,6 @@ builds:
     ignore:
       - goos: windows
         goarch: arm64
-    # CGO cross-compilation configuration
     flags:
       - -trimpath
     ldflags:
