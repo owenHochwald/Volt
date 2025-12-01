@@ -117,7 +117,8 @@ func (m *ResponsePane) ClearLoadTestStats() {
 
 func (m *ResponsePane) SetHeight(height int) {
 	m.height = height
-	m.viewport.Height = height
+	// Viewport needs to be smaller to account for status bar, tabs, etc.
+	m.viewport.Height = height - 5
 }
 
 func (m *ResponsePane) SetWidth(width int) {
@@ -220,8 +221,6 @@ func (m ResponsePane) View() string {
 	}
 
 	tabHeader := m.renderTabs()
-
-	m.viewport.Height = m.height - 5
 	tabContent := m.renderActiveTabContent()
 
 	return lipgloss.JoinVertical(
@@ -295,10 +294,10 @@ func (m *ResponsePane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.activeTab = 2
 			m.updateViewportForActiveTab()
 		// Tab navigation
-		case "k", tea.KeyLeft.String():
+		case "h", tea.KeyLeft.String():
 			m.activeTab = (m.activeTab - 1 + 3) % 3
 			m.updateViewportForActiveTab()
-		case "j", tea.KeyRight.String():
+		case "l", tea.KeyRight.String():
 			m.activeTab = (m.activeTab + 1) % 3
 			m.updateViewportForActiveTab()
 		// Copy handling
