@@ -18,8 +18,19 @@ import (
 )
 
 var (
-	inactiveTab = lipgloss.NewStyle().Padding(0, 1).Foreground(lipgloss.Color("240"))
-	activeTab   = lipgloss.NewStyle().Padding(0, 1).Background(lipgloss.Color("76")).Foreground(lipgloss.Color("255"))
+	inactiveTab = lipgloss.NewStyle().
+			Padding(0, 1).
+			Foreground(dimGray)
+
+	activeTab = lipgloss.NewStyle().
+			Padding(0, 2).
+			Background(darkPurple).
+			Foreground(lipgloss.Color("255")).
+			Bold(true)
+
+	responseKeyStyle   = lipgloss.NewStyle().Foreground(focusColor).Bold(true) // Pink for keys
+	responseValueStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("252")) // Light gray for values
+	responseLabelStyle = lipgloss.NewStyle().Foreground(deepViolet).Bold(true) // Deep violet for labels
 )
 
 type ResponsePane struct {
@@ -61,7 +72,6 @@ func (m *ResponsePane) SetResponse(response *http.Response) {
 	m.isLoadTest = false
 
 	if m.Response != nil {
-
 		if m.Response.Error != "" {
 			m.viewport.SetContent(m.Response.Error)
 			return
@@ -165,7 +175,6 @@ func (m *ResponsePane) updateViewportForActiveTab() {
 func (m *ResponsePane) updateLoadTestTabContent() {
 	if m.LoadTestStats == nil {
 		m.viewport.SetContent("No data")
-		return
 	}
 
 	var content string
@@ -203,7 +212,6 @@ func (m ResponsePane) View() string {
 	}
 
 	var statusBar string
-
 	if m.Response.Error != "" {
 		statusBar = ErrorStyle.Render("ERROR")
 		m.viewport.SetContent(m.Response.Error)
@@ -213,7 +221,7 @@ func (m ResponsePane) View() string {
 
 	tabHeader := m.renderTabs()
 
-	m.viewport.Height = m.height - 2
+	m.viewport.Height = m.height - 5
 	tabContent := m.renderActiveTabContent()
 
 	return lipgloss.JoinVertical(
@@ -447,9 +455,9 @@ func (m ResponsePane) renderHeaders() string {
 	for _, key := range keys {
 		values := m.Response.Headers[key]
 		for _, value := range values {
-			b.WriteString(keyStyle.Render(key))
+			b.WriteString(responseKeyStyle.Render(key))
 			b.WriteString(": ")
-			b.WriteString(value)
+			b.WriteString(responseValueStyle.Render(value))
 			b.WriteString("\n")
 		}
 	}
@@ -467,29 +475,26 @@ func (m ResponsePane) renderTiming() string {
 	b.WriteString("Request Timing\n")
 	b.WriteString(strings.Repeat("─", 60) + "\n\n")
 
-	labelStyle := lipgloss.NewStyle().Foreground(darkPurple).Bold(true)
-	valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
-
 	// Total duration
-	b.WriteString(labelStyle.Render("Total Duration"))
+	b.WriteString(responseLabelStyle.Render("Total Duration"))
 	b.WriteString(": ")
-	b.WriteString(valueStyle.Render(m.Response.Duration.String()))
+	b.WriteString(responseValueStyle.Render(m.Response.Duration.String()))
 	b.WriteString("\n\n")
 
 	// Format in milliseconds for readability
 	ms := m.Response.Duration.Milliseconds()
-	b.WriteString(labelStyle.Render("Milliseconds"))
+	b.WriteString(responseLabelStyle.Render("Milliseconds"))
 	b.WriteString(": ")
-	b.WriteString(valueStyle.Render(fmt.Sprintf("%d ms", ms)))
+	b.WriteString(responseValueStyle.Render(fmt.Sprintf("%d ms", ms)))
 	b.WriteString("\n\n")
 
 	// Connection type
-	b.WriteString(labelStyle.Render("Connection Type"))
+	b.WriteString(responseLabelStyle.Render("Connection Type"))
 	b.WriteString(": ")
 	if m.Response.RoundTrip {
-		b.WriteString(valueStyle.Render("Round Trip (new connection)"))
+		b.WriteString(responseValueStyle.Render("Round Trip (new connection)"))
 	} else {
-		b.WriteString(valueStyle.Render("Direct (keep-alive)"))
+		b.WriteString(responseValueStyle.Render("Direct (keep-alive)"))
 	}
 	b.WriteString("\n\n")
 
