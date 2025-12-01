@@ -14,7 +14,7 @@ func (m Model) View() string {
 	mainHeight := contentHeight - 2
 
 	requestHeight := int(float64(mainHeight)/2.2) - 10
-	responseHeight := int(float64(mainHeight)/2.2) - 2
+	responseHeight := int(float64(mainHeight)/2.2) - 3
 
 	sidebar := m.sidebarView(mainHeight, sidebarWidth)
 

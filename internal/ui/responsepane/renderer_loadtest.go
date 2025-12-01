@@ -1,0 +1,147 @@
+package responsepane
+
+import (
+	"fmt"
+	"strings"
+	"time"
+)
+
+// renderLoadTestOverview renders the overview tab for load test results
+func (m ResponsePane) renderLoadTestOverview() string {
+	stats := m.LoadTestStats
+	if stats == nil {
+		return "No data"
+	}
+
+	var b strings.Builder
+	b.WriteString("Load Test Results\n")
+	b.WriteString(strings.Repeat("─", 60) + "\n\n")
+
+	// Calculate success metrics
+	successCount := stats.CompletedRequests - stats.FailedRequests
+	successRate := 0.0
+	if stats.CompletedRequests > 0 {
+		successRate = float64(successCount) / float64(stats.CompletedRequests) * 100
+	}
+
+	// Requests
+	b.WriteString(responseLabelStyle.Render("Requests"))
+	b.WriteString(": ")
+	b.WriteString(responseValueStyle.Render(fmt.Sprintf("%d / %d", stats.CompletedRequests, stats.TotalRequests)))
+	b.WriteString("\n\n")
+
+	// Success
+	b.WriteString(responseLabelStyle.Render("Success"))
+	b.WriteString(": ")
+	b.WriteString(responseValueStyle.Render(fmt.Sprintf("%d (%.1f%%)", successCount, successRate)))
+	b.WriteString("\n\n")
+
+	// Failed
+	b.WriteString(responseLabelStyle.Render("Failed"))
+	b.WriteString(": ")
+	b.WriteString(responseValueStyle.Render(fmt.Sprintf("%d (%.1f%%)", stats.FailedRequests, 100-successRate)))
+	b.WriteString("\n\n")
+
+	// Calculate throughput
+	elapsed := time.Since(stats.StartTime)
+	if !stats.EndTime.IsZero() {
+		elapsed = stats.EndTime.Sub(stats.StartTime)
+	}
+	throughput := 0.0
+	if elapsed.Seconds() > 0 {
+		throughput = float64(stats.CompletedRequests) / elapsed.Seconds()
+	}
+
+	// Throughput
+	b.WriteString(responseLabelStyle.Render("Throughput"))
+	b.WriteString(": ")
+	b.WriteString(responseValueStyle.Render(fmt.Sprintf("%.1f req/s", throughput)))
+	b.WriteString("\n\n")
+
+	// Duration
+	b.WriteString(responseLabelStyle.Render("Duration"))
+	b.WriteString(": ")
+	b.WriteString(responseValueStyle.Render(elapsed.Round(time.Millisecond).String()))
+	b.WriteString("\n")
+
+	return b.String()
+}
+
+// renderLoadTestLatency renders the latency distribution tab for load test results
+func (m ResponsePane) renderLoadTestLatency() string {
+	stats := m.LoadTestStats
+	if stats == nil || stats.Percentiles == nil {
+		return "No latency data"
+	}
+
+	var b strings.Builder
+	b.WriteString("Latency Distribution\n")
+	b.WriteString(strings.Repeat("─", 60) + "\n\n")
+
+	// Min
+	b.WriteString(responseLabelStyle.Render("Min"))
+	b.WriteString(":    ")
+	b.WriteString(responseValueStyle.Render(stats.MinDuration.Round(time.Millisecond).String()))
+	b.WriteString("\n\n")
+
+	// p50
+	b.WriteString(responseLabelStyle.Render("p50"))
+	b.WriteString(":    ")
+	b.WriteString(responseValueStyle.Render(stats.Percentiles.Percentile(50).Round(time.Millisecond).String()))
+	b.WriteString("\n\n")
+
+	// p90
+	b.WriteString(responseLabelStyle.Render("p90"))
+	b.WriteString(":    ")
+	b.WriteString(responseValueStyle.Render(stats.Percentiles.Percentile(90).Round(time.Millisecond).String()))
+	b.WriteString("\n\n")
+
+	// p95
+	b.WriteString(responseLabelStyle.Render("p95"))
+	b.WriteString(":    ")
+	b.WriteString(responseValueStyle.Render(stats.Percentiles.Percentile(95).Round(time.Millisecond).String()))
+	b.WriteString("\n\n")
+
+	// p99
+	b.WriteString(responseLabelStyle.Render("p99"))
+	b.WriteString(":    ")
+	b.WriteString(responseValueStyle.Render(stats.Percentiles.Percentile(99).Round(time.Millisecond).String()))
+	b.WriteString("\n\n")
+
+	// Max
+	b.WriteString(responseLabelStyle.Render("Max"))
+	b.WriteString(":    ")
+	b.WriteString(responseValueStyle.Render(stats.MaxDuration.Round(time.Millisecond).String()))
+	b.WriteString("\n")
+
+	return b.String()
+}
+
+// renderLoadTestErrors renders the error breakdown tab for load test results
+func (m ResponsePane) renderLoadTestErrors() string {
+	stats := m.LoadTestStats
+	if stats == nil {
+		return "No error data"
+	}
+
+	var b strings.Builder
+	b.WriteString("Error Breakdown\n")
+	b.WriteString(strings.Repeat("─", 60) + "\n\n")
+
+	if len(stats.Errors) == 0 {
+		b.WriteString(responseValueStyle.Render("No errors encountered!"))
+		b.WriteString("\n\n")
+		b.WriteString(faintStyle.Render("All requests completed successfully."))
+		return b.String()
+	}
+
+	// Render each error code with styling
+	for code, count := range stats.Errors {
+		b.WriteString(responseKeyStyle.Render(fmt.Sprintf("HTTP %s", code)))
+		b.WriteString(": ")
+		b.WriteString(responseValueStyle.Render(fmt.Sprintf("%d occurrences", count)))
+		b.WriteString("\n\n")
+	}
+
+	return b.String()
+}
