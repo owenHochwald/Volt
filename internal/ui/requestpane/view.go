@@ -72,7 +72,7 @@ func (m RequestPane) View() string {
 			nameLine,
 			headersLine,
 			bodyLine,
-			"",
+			"\n\n",
 			lipgloss.NewStyle().Foreground(lipgloss.Color("226")).Bold(true).Render("Load Test Configuration:"),
 			ltConcurrencyLine,
 			ltTotalLine,

@@ -6,6 +6,7 @@ import (
 	"github.com/owenHochwald/volt/internal/storage"
 	"github.com/owenHochwald/volt/internal/ui"
 	"github.com/owenHochwald/volt/internal/ui/requestpane"
+	"github.com/owenHochwald/volt/internal/ui/responsepane"
 	"github.com/owenHochwald/volt/internal/utils"
 )
 
@@ -14,7 +15,7 @@ type Model struct {
 
 	sidebarPane  *ui.SidebarPane
 	requestPane  requestpane.RequestPane
-	responsePane *ui.ResponsePane
+	responsePane *responsepane.ResponsePane
 	headerPane   *ui.Header
 
 	savedRequests []http.Request
@@ -27,7 +28,7 @@ type Model struct {
 }
 
 func SetupModel(db *storage.SQLiteStorage) Model {
-	responsePane := ui.SetupResponsePane()
+	responsePane := responsepane.SetupResponsePane()
 	m := Model{
 		db:           db,
 		sidebarPane:  ui.NewSidebar(db),

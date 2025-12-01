@@ -5,6 +5,7 @@ import (
 	"github.com/owenHochwald/volt/internal/http"
 	"github.com/owenHochwald/volt/internal/ui"
 	"github.com/owenHochwald/volt/internal/ui/requestpane"
+	"github.com/owenHochwald/volt/internal/ui/responsepane"
 	"github.com/owenHochwald/volt/internal/utils"
 )
 
@@ -116,7 +117,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	} else if m.focusedPanel == utils.ResponsePanel {
 		var responsePaneModel tea.Model
 		responsePaneModel, cmd = m.responsePane.Update(msg)
-		m.responsePane = responsePaneModel.(*ui.ResponsePane)
+		m.responsePane = responsePaneModel.(*responsepane.ResponsePane)
 		return m, cmd
 	}
 
