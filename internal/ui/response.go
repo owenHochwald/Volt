@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/alecthomas/chroma/v2/quick"
+	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -289,19 +290,28 @@ func (m *ResponsePane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "k", tea.KeyLeft.String():
 			m.activeTab = (m.activeTab - 1 + 3) % 3
 			m.updateViewportForActiveTab()
-
 		case "j", tea.KeyRight.String():
 			m.activeTab = (m.activeTab + 1) % 3
 			m.updateViewportForActiveTab()
-
+		// Copy handling
+		case "y", "Y":
+			if m.Response != nil && !m.isLoadTest {
+				return m, m.copyToClipboard(m.Response.Body)
+			}
 		}
-
 	}
 
 	m.viewport, cmd = m.viewport.Update(msg)
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
+}
+
+func (m ResponsePane) copyToClipboard(content string) tea.Cmd {
+	return func() tea.Msg {
+		clipboard.WriteAll(content)
+		return nil
+	}
 }
 
 func SetupResponsePane() ResponsePane {
