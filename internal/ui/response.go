@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/alecthomas/chroma/v2/quick"
+	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -16,8 +18,19 @@ import (
 )
 
 var (
-	inactiveTab = lipgloss.NewStyle().Padding(0, 1).Foreground(lipgloss.Color("240"))
-	activeTab   = lipgloss.NewStyle().Padding(0, 1).Background(lipgloss.Color("76")).Foreground(lipgloss.Color("255"))
+	inactiveTab = lipgloss.NewStyle().
+			Padding(0, 1).
+			Foreground(dimGray)
+
+	activeTab = lipgloss.NewStyle().
+			Padding(0, 2).
+			Background(darkPurple).
+			Foreground(lipgloss.Color("255")).
+			Bold(true)
+
+	responseKeyStyle   = lipgloss.NewStyle().Foreground(focusColor).Bold(true) // Pink for keys
+	responseValueStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("252")) // Light gray for values
+	responseLabelStyle = lipgloss.NewStyle().Foreground(deepViolet).Bold(true) // Deep violet for labels
 )
 
 type ResponsePane struct {
@@ -59,7 +72,6 @@ func (m *ResponsePane) SetResponse(response *http.Response) {
 	m.isLoadTest = false
 
 	if m.Response != nil {
-
 		if m.Response.Error != "" {
 			m.viewport.SetContent(m.Response.Error)
 			return
@@ -105,7 +117,8 @@ func (m *ResponsePane) ClearLoadTestStats() {
 
 func (m *ResponsePane) SetHeight(height int) {
 	m.height = height
-	m.viewport.Height = height
+	// Viewport needs to be smaller to account for status bar, tabs, etc.
+	m.viewport.Height = height - 5
 }
 
 func (m *ResponsePane) SetWidth(width int) {
@@ -154,9 +167,7 @@ func (m *ResponsePane) updateViewportForActiveTab() {
 		}
 	case 1: // Headers
 		content = m.renderHeaders()
-	case 2: // Cookies
-		content = m.renderCookies()
-	case 3: // Timing
+	case 2: // Timing
 		content = m.renderTiming()
 	}
 	m.viewport.SetContent(content)
@@ -165,7 +176,6 @@ func (m *ResponsePane) updateViewportForActiveTab() {
 func (m *ResponsePane) updateLoadTestTabContent() {
 	if m.LoadTestStats == nil {
 		m.viewport.SetContent("No data")
-		return
 	}
 
 	var content string
@@ -203,7 +213,6 @@ func (m ResponsePane) View() string {
 	}
 
 	var statusBar string
-
 	if m.Response.Error != "" {
 		statusBar = ErrorStyle.Render("ERROR")
 		m.viewport.SetContent(m.Response.Error)
@@ -212,11 +221,15 @@ func (m ResponsePane) View() string {
 	}
 
 	tabHeader := m.renderTabs()
-
-	m.viewport.Height = m.height - 2
 	tabContent := m.renderActiveTabContent()
 
-	return lipgloss.JoinVertical(lipgloss.Left, statusBar, tabHeader, tabContent)
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		statusBar,
+		"\n",
+		tabHeader,
+		tabContent,
+	)
 }
 
 func (m ResponsePane) renderLoadTestView() string {
@@ -270,6 +283,7 @@ func (m *ResponsePane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
+		// Direct tab access
 		case "1":
 			m.activeTab = 0
 			m.updateViewportForActiveTab()
@@ -279,9 +293,18 @@ func (m *ResponsePane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "3":
 			m.activeTab = 2
 			m.updateViewportForActiveTab()
-		case "4":
-			m.activeTab = 3
+		// Tab navigation
+		case "h", tea.KeyLeft.String():
+			m.activeTab = (m.activeTab - 1 + 3) % 3
 			m.updateViewportForActiveTab()
+		case "l", tea.KeyRight.String():
+			m.activeTab = (m.activeTab + 1) % 3
+			m.updateViewportForActiveTab()
+		// Copy handling
+		case "y", "Y":
+			if m.Response != nil && !m.isLoadTest {
+				return m, m.copyToClipboard(m.Response.Body)
+			}
 		}
 	}
 
@@ -289,6 +312,13 @@ func (m *ResponsePane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
+}
+
+func (m ResponsePane) copyToClipboard(content string) tea.Cmd {
+	return func() tea.Msg {
+		clipboard.WriteAll(content)
+		return nil
+	}
 }
 
 func SetupResponsePane() ResponsePane {
@@ -301,7 +331,7 @@ func SetupResponsePane() ResponsePane {
 }
 
 func (m ResponsePane) renderTabs() string {
-	tabs := []string{"[1] Body", "[2] Headers", "[3] Cookies", "[4] Timing"}
+	tabs := []string{"[1] Body", "[2] Headers", "[3] Timing"}
 	renderedTabs := []string{}
 
 	for i, tab := range tabs {
@@ -311,8 +341,12 @@ func (m ResponsePane) renderTabs() string {
 			renderedTabs = append(renderedTabs, inactiveTab.Render(tab))
 		}
 	}
+	renderedTabs = append(renderedTabs, "\n")
 
-	return lipgloss.JoinHorizontal(lipgloss.Left, renderedTabs...)
+	return lipgloss.JoinHorizontal(
+		lipgloss.Left,
+		renderedTabs...,
+	)
 }
 
 func (m ResponsePane) renderActiveTabContent() string {
@@ -322,8 +356,6 @@ func (m ResponsePane) renderActiveTabContent() string {
 	case 1:
 		return m.renderHeaders()
 	case 2:
-		return m.renderCookies()
-	case 3:
 		return m.renderTiming()
 	default:
 		return "Something went wrong."
@@ -403,15 +435,71 @@ func (m ResponsePane) renderLoadTestErrors() string {
 	return b.String()
 }
 
+// renderHeaders renders the response headers to the headers viewport
 func (m ResponsePane) renderHeaders() string {
-	return "Headers Content Goes Here\n\n(Not yet implemented)"
+	if m.Response == nil || m.Response.Headers == nil {
+		return "No headers available"
+	}
+
+	var b strings.Builder
+	b.WriteString("Response Headers:\n")
+	b.WriteString(strings.Repeat("-", len("Response Headers:")+2) + "\n\n")
+
+	keys := make([]string, 0, len(m.Response.Headers))
+	for k := range m.Response.Headers {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, key := range keys {
+		values := m.Response.Headers[key]
+		for _, value := range values {
+			b.WriteString(responseKeyStyle.Render(key))
+			b.WriteString(": ")
+			b.WriteString(responseValueStyle.Render(value))
+			b.WriteString("\n")
+		}
+	}
+	return b.String()
+
 }
 
-func (m ResponsePane) renderCookies() string {
-	return "Cookies Content Goes Here\n\n(Not yet implemented)"
-}
-
+// renderTiming renders the response timing data to the timing viewport
 func (m ResponsePane) renderTiming() string {
-	total := fmt.Sprintf("Total Duration: %s\n", m.Response.Duration)
-	return total + "\nTiming Content Goes Here\n\n(Not yet implemented)"
+	if m.Response == nil {
+		return "No timing data available"
+	}
+
+	var b strings.Builder
+	b.WriteString("Request Timing\n")
+	b.WriteString(strings.Repeat("─", 60) + "\n\n")
+
+	// Total duration
+	b.WriteString(responseLabelStyle.Render("Total Duration"))
+	b.WriteString(": ")
+	b.WriteString(responseValueStyle.Render(m.Response.Duration.String()))
+	b.WriteString("\n\n")
+
+	// Format in milliseconds for readability
+	ms := m.Response.Duration.Milliseconds()
+	b.WriteString(responseLabelStyle.Render("Milliseconds"))
+	b.WriteString(": ")
+	b.WriteString(responseValueStyle.Render(fmt.Sprintf("%d ms", ms)))
+	b.WriteString("\n\n")
+
+	// Connection type
+	b.WriteString(responseLabelStyle.Render("Connection Type"))
+	b.WriteString(": ")
+	if m.Response.RoundTrip {
+		b.WriteString(responseValueStyle.Render("Round Trip (new connection)"))
+	} else {
+		b.WriteString(responseValueStyle.Render("Direct (keep-alive)"))
+	}
+	b.WriteString("\n\n")
+
+	b.WriteString(lipgloss.NewStyle().Faint(true).Render(
+		"Note: Detailed timing breakdown (DNS, TLS, TTFB) coming in a future release!",
+	))
+
+	return b.String()
 }

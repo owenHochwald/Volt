@@ -11,6 +11,7 @@ var (
 	darkPurple = lipgloss.Color("#4C1D95")
 	deepViolet = lipgloss.Color("#5B21B6")
 	dimGray    = lipgloss.Color("240")
+	keyStyle   = lipgloss.NewStyle().Foreground(darkPurple).Bold(true)
 
 	ErrorStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("160")).
