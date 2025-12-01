@@ -14,26 +14,29 @@ func (m Model) View() string {
 	mainHeight := contentHeight - 2
 
 	requestHeight := int(float64(mainHeight)/2.2) - 10
-	responseHeight := int(float64(mainHeight)/2.2) - 3
+	responseHeight := int(float64(mainHeight)/2.2) - 2
 
 	sidebar := m.sidebarView(mainHeight, sidebarWidth)
 
 	// Conditional rendering for custom request pane border color
 	var request string
+	var response string
 	if m.requestPane.LoadTestMode {
 		// Load test style already has yellow border, background, and bold - don't apply focus
 		request = ui.LoadTestBorderStyle.Width(mainWidth - 10).
 			Height(requestHeight).
 			Render(m.requestView(requestHeight))
+		response = ui.ApplyFocus(ui.ResponseStyle, m.focusedPanel == 2).Width(mainWidth - 10).
+			Height(responseHeight - 3).
+			Render(m.responseView(responseHeight, mainWidth-10))
 	} else {
 		request = ui.ApplyFocus(ui.RequestStyle, m.focusedPanel == 1).Width(mainWidth - 10).
 			Height(requestHeight).
 			Render(m.requestView(requestHeight))
+		response = ui.ApplyFocus(ui.ResponseStyle, m.focusedPanel == 2).Width(mainWidth - 10).
+			Height(responseHeight).
+			Render(m.responseView(responseHeight, mainWidth-10))
 	}
-
-	response := ui.ApplyFocus(ui.ResponseStyle, m.focusedPanel == 2).Width(mainWidth - 10).
-		Height(responseHeight).
-		Render(m.responseView(responseHeight, mainWidth-10))
 
 	rightSide := lipgloss.JoinVertical(lipgloss.Right, request, response)
 	bottomPanels := lipgloss.JoinHorizontal(lipgloss.Top, sidebar, rightSide)
