@@ -6,6 +6,7 @@ import tea "github.com/charmbracelet/bubbletea"
 type ShortcutPane struct {
 	activeTab     int
 	height, width int
+	tabs          []ShortcutTab
 
 	Focused bool
 	// Future: might need to refactor viewable area to be viewports

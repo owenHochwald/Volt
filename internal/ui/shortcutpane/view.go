@@ -1,0 +1,78 @@
+package shortcutpane
+
+import (
+	"strings"
+
+	"github.com/charmbracelet/lipgloss"
+)
+
+func (m ShortcutPane) View() string {
+	// Modal container style
+	modalStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("205")).
+		Padding(1, 2).
+		Width(m.width).
+		Height(m.height).
+		Bold(true)
+
+	title := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("205")).
+		Render("Keyboard Shortcuts")
+
+	tabBar := m.renderTabs()
+	content := m.renderShortcutList()
+
+	// Footer hint
+	footer := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("240")).
+		Render("Press ? or Escape to close")
+
+	modalContent := lipgloss.JoinVertical(
+		lipgloss.Left,
+		title,
+		"",
+		tabBar,
+		"",
+		content,
+		"",
+		footer,
+	)
+
+	return modalStyle.Render(modalContent)
+}
+
+// renderShortcutList renders the shortcuts for the active tab
+func (m ShortcutPane) renderShortcutList() string {
+	if m.activeTab >= len(m.tabs) {
+		return "No shortcuts available"
+	}
+
+	tab := m.tabs[m.activeTab]
+	var lines []string
+
+	// Tab name header
+	header := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("205")).
+		Render(tab.Name + ":")
+	lines = append(lines, header, "")
+
+	// Shortcut list
+	for _, shortcut := range tab.Shortcuts {
+		keyStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("205")).
+			Bold(true)
+
+		key := keyStyle.Render(lipgloss.NewStyle().Width(15).Render(shortcut.Key))
+		desc := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("255")).
+			Render(shortcut.Description)
+
+		line := lipgloss.JoinHorizontal(lipgloss.Left, "  ", key, desc)
+		lines = append(lines, line)
+	}
+
+	return strings.Join(lines, "\n")
+}

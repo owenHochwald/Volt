@@ -7,6 +7,7 @@ import (
 	"github.com/owenHochwald/volt/internal/ui"
 	"github.com/owenHochwald/volt/internal/ui/requestpane"
 	"github.com/owenHochwald/volt/internal/ui/responsepane"
+	"github.com/owenHochwald/volt/internal/ui/shortcutpane"
 	"github.com/owenHochwald/volt/internal/utils"
 )
 
@@ -17,6 +18,7 @@ type Model struct {
 	requestPane  requestpane.RequestPane
 	responsePane *responsepane.ResponsePane
 	headerPane   *ui.Header
+	shortcutPane shortcutpane.ShortcutPane
 
 	savedRequests []http.Request
 
@@ -25,17 +27,22 @@ type Model struct {
 	width, height int
 
 	loadTestUpdates <-chan *http.LoadTestStats
+	showHelpModal   bool
 }
 
 func SetupModel(db *storage.SQLiteStorage) Model {
 	responsePane := responsepane.SetupResponsePane()
+	shortcutPane := shortcutpane.SetupShortcutPane()
+
 	m := Model{
-		db:           db,
-		sidebarPane:  ui.NewSidebar(db),
-		requestPane:  requestpane.SetupRequestPane(db),
-		responsePane: &responsePane,
-		focusedPanel: utils.SidebarPanel,
-		headerPane:   ui.SetupHeader(),
+		db:            db,
+		sidebarPane:   ui.NewSidebar(db),
+		requestPane:   requestpane.SetupRequestPane(db),
+		responsePane:  &responsePane,
+		shortcutPane:  shortcutPane,
+		focusedPanel:  utils.SidebarPanel,
+		headerPane:    ui.SetupHeader(),
+		showHelpModal: false,
 	}
 	return m
 }

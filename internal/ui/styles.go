@@ -20,6 +20,16 @@ var (
 	FocusedStyle   = lipgloss.NewStyle().Foreground(focusColor)
 	UnfocusedStyle = lipgloss.NewStyle().Foreground(unfocusColor)
 
+	InactiveTab = lipgloss.NewStyle().
+			Padding(0, 1).
+			Foreground(lipgloss.Color("240")) // dimGray
+
+	ActiveTab = lipgloss.NewStyle().
+			Padding(0, 2).
+			Background(lipgloss.Color("98")). // darkPurple
+			Foreground(lipgloss.Color("255")).
+			Bold(true)
+
 	FocusedButton = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("205")).
 			Bold(true)
@@ -61,6 +71,17 @@ var (
 	LoadTestBorderStyle = lipgloss.NewStyle().
 				BorderStyle(lipgloss.RoundedBorder()).
 				BorderForeground(lipgloss.Color("226")) // Yellow
+
+	ModalOverlayStyle = lipgloss.NewStyle().
+				Background(lipgloss.Color("0")). // Black background
+				Foreground(lipgloss.Color("255"))
+
+	ModalContainerStyle = lipgloss.NewStyle().
+				Border(lipgloss.RoundedBorder()).
+				BorderForeground(focusColor).
+				Background(lipgloss.Color("235")). // Dark gray background
+				Padding(1, 2).
+				Bold(true)
 )
 
 func ApplyFocus(style lipgloss.Style, focus bool) lipgloss.Style {

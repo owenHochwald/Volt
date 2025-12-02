@@ -40,7 +40,14 @@ func (m Model) View() string {
 
 	rightSide := lipgloss.JoinVertical(lipgloss.Right, request, response)
 	bottomPanels := lipgloss.JoinHorizontal(lipgloss.Top, sidebar, rightSide)
-	return lipgloss.JoinVertical(lipgloss.Top, m.headerView(m.width), bottomPanels)
+	mainView := lipgloss.JoinVertical(lipgloss.Top, m.headerView(m.width), bottomPanels)
+
+	// If help modal is open, overlay it on top
+	if m.showHelpModal {
+		return m.overlayHelpModal()
+	}
+
+	return mainView
 }
 
 func (m Model) headerView(width int) string {
@@ -68,4 +75,22 @@ func (m Model) responseView(height, width int) string {
 	m.responsePane.SetWidth(width)
 
 	return m.responsePane.View()
+}
+
+// overlayHelpModal renders the help modal centered over the main view
+func (m Model) overlayHelpModal() string {
+	helpModal := m.shortcutPane.View()
+
+	// Position modal in center using Place
+	overlay := lipgloss.Place(
+		m.width,
+		m.height,
+		lipgloss.Center,
+		lipgloss.Center,
+		helpModal,
+		lipgloss.WithWhitespaceChars("░"),
+		lipgloss.WithWhitespaceForeground(lipgloss.Color("236")),
+	)
+
+	return overlay
 }
