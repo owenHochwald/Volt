@@ -7,10 +7,40 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/owenHochwald/volt/internal/app"
+	"github.com/owenHochwald/volt/internal/cli"
 	"github.com/owenHochwald/volt/internal/storage"
 )
 
 func main() {
+	// If any command line arguments are provided, use CLI mode
+	if len(os.Args) > 1 {
+		// Special handling for help
+		if os.Args[1] == "help" || os.Args[1] == "-h" || os.Args[1] == "--help" {
+			cli.PrintHelp()
+			return
+		}
+
+		// All other args go to bench mode
+		// Support both "volt bench ..." and "volt ..." (with bench implied)
+		args := os.Args[1:]
+		if os.Args[1] == "bench" {
+			args = os.Args[2:]
+		}
+
+		config, err := cli.ParseBenchFlags(args)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error parsing flags: %v\n", err)
+			os.Exit(1)
+		}
+
+		if err := cli.RunBench(config); err != nil {
+			fmt.Fprintf(os.Stderr, "Error running benchmark: %v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
+
+	// TUI mode
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error getting home directory: %v", err)
