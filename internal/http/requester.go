@@ -83,6 +83,7 @@ type JobConfig struct {
 	RateLimit     int           // max requests per second
 	Timeout       time.Duration // time per request
 	QPS           float64       // rate limit for queries per second
+	StreamUpdates bool          // if false, only send final result (for CLI mode)
 
 	// Internal state
 	client        *FastClient
@@ -202,6 +203,12 @@ func (s *JobConfig) runWorker(workerID int, wg *sync.WaitGroup) {
 	}
 
 	requestsPerWorker := s.TotalRequests / s.Concurrency
+	remainder := s.TotalRequests % s.Concurrency
+
+	// First 'remainder' workers get one extra request
+	if workerID < remainder {
+		requestsPerWorker++
+	}
 
 	for i := 0; i < requestsPerWorker; i++ {
 		// QPS throttling
@@ -277,8 +284,17 @@ func (s *JobConfig) flushWorkerStats(workerID int, stats *workerStats) {
 }
 
 func (s *JobConfig) aggregateStats(updates chan<- *LoadTestStats) {
-	ticker := time.NewTicker(300 * time.Millisecond)
-	defer ticker.Stop()
+	var ticker *time.Ticker
+	var tickerCh <-chan time.Time
+
+	if s.StreamUpdates {
+		ticker = time.NewTicker(300 * time.Millisecond)
+		defer ticker.Stop()
+		tickerCh = ticker.C
+	} else {
+		// For CLI mode: use a nil channel (will never receive)
+		tickerCh = nil
+	}
 
 	for {
 		select {
@@ -320,8 +336,8 @@ func (s *JobConfig) aggregateStats(updates chan<- *LoadTestStats) {
 			}
 			s.stats.mu.Unlock()
 
-		case <-ticker.C:
-			// Send snapshot to UI every 300ms
+		case <-tickerCh:
+			// When tickerCh is nil, this case is never selected
 			snapshot := s.stats.GetSnapshot()
 			updates <- &snapshot
 		}

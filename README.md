@@ -10,7 +10,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/owenHochwald/volt)](https://goreportcard.com/report/github.com/owenHochwald/volt)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL_2.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
 
-[Installation](#installation) • [Why Volt?](#why-volt) • [Keyboard Shortcuts](#keyboard-shortcuts)
+[Installation](#installation) • [Why Volt?](#why-volt)
 
 <!-- Add your demo.gif here once created -->
 <!-- ![Demo](demo.gif) -->
@@ -54,24 +54,37 @@ Volt is a **high-performance, keyboard-driven HTTP client** that lives in your t
 
 ## Performance
 
-Volt is built for raw speed. The core engine is designed to minimize memory allocations and maximize throughput, allowing you to test your services, not your load tester.
-
+Volt is built for raw speed. The core engine is designed to minimize memory allocations and maximize throughput.
 ### Benchmarks (Apple M4)
 
-| Concurrency | Req/Sec | Latency/Op | Allocations |
-|-------------|---------|------------|-------------|
-| 10          | 141,533 | 7 µs       | 0 B/op      |
-| 50          | 208,035 | 4 µs       | 0 B/op      |
-| **100**     | **213,885** | **4 µs**   | **0 B/op**  |
-| 500         | 92,891  | 10 µs      | 4 B/op      |
+| Concurrency | Req/Sec | Allocations |
+|-------------|--------|-------------|
+| 10          | 141,533 | 0 B/op      |
+| 50          | 208,035   | 0 B/op      |
+| **100**     | **213,885**   | **0 B/op**  |
+| 500         | 92,891   | 4 B/op      |
 
 > **Note:** At peak performance (100 workers), Volt can generate **1 Million requests in < 5 seconds**.
 
 *Benchmarks run against a zero-latency local endpoint to measure engine overhead.*
 
+### Real-World Benchmarks vs. `hey` ⚡
+
+
+| Connections (C) | Volt Req/Sec | `hey` Req/Sec | **Volt Advantage** |
+|:---------------:|:------------:|:-------------:|:------------------:|
+| 10              | 137.9        | 145.3         | 0.95x              |
+| **50** | **561.8** | 144.0         | **3.9x faster** |
+| 100             | 877.5        | 294.9         | 3.0x faster        |
+
+* You can test this with the included `benchmark-remote.sh` script.*
+
+
+---
+
 ## Installation
 
-### Homebrew (macOS & Linux)
+### (WIP) Homebrew (macOS & Linux) 
 
 ```bash
 brew install owenHochwald/volt/volt
@@ -144,38 +157,6 @@ volt
 
 This will launch the TUI interface where you can start making HTTP requests.
 
-## Keyboard Shortcuts
-
-Volt is designed to be used entirely with your keyboard.
-
-### Global Navigation
-- `q` or `Ctrl+C` - Quit application
-- `Shift+Tab` - Cycle between panels (sidebar → request → response)
-- `Esc` - Return to sidebar from request panel
-
-### Sidebar Panel
-- `j` / `↓` - Move down in list
-- `k` / `↑` - Move up in list
-- `Enter` or `Space` - Select request and open in editor
-- `n` - Create new request
-- `d` - Delete selected request
-- `/` - Filter/search requests
-
-### Request Editor
-- `Tab` / `↑` / `↓` - Navigate between form fields
-- `h` / `←` - Cycle to previous HTTP method
-- `l` / `→` - Cycle to next HTTP method
-- `Enter` - Send request (when on submit button)
-- Standard editing keys work in text inputs and text areas
-
-### Response Viewer
-- `j` / `↓` - Scroll down through response
-- `k` / `↑` - Scroll up through response
-- `d` - Scroll down half page
-- `u` - Scroll up half page
-- `g` - Jump to top of response
-- `G` - Jump to bottom of response
-
 ### Vim Philosophy
 
 Volt embraces Vim's modal efficiency:
@@ -184,6 +165,34 @@ Volt embraces Vim's modal efficiency:
 - Esc always returns you to a safe state
 - Focus is indicated visually, eliminating mode confusion
 
+
+## CLI Load Testing
+
+Volt also includes a powerful little HTTP load testing tool for direct access, accessible via the `bench` subcommand.
+
+```bash
+volt bench [flags]
+```
+
+### Examples
+
+```bash
+# Basic throughput test
+volt bench -url http://localhost:8080 -c 100 -d 30s
+
+# POST request with custom headers
+volt bench -url http://localhost:8080/api -m POST \
+  -b '{"test":true}' -H "Content-Type: application/json"
+
+# JSON output to file for CI/CD
+volt bench -url http://localhost:8080 -c 50 -d 60s -json -o results.json
+
+# Rate-limited testing
+volt bench -url http://localhost:8080 -c 10 -d 30s -rate 1000
+
+# For help!
+volt bench -h
+```
 
 ## License
 
