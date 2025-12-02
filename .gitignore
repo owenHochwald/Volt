@@ -26,6 +26,5 @@ coverage.html
 # Local config
 .hitt/
 volt.db
-demo.gif
 *.tape
 benchmarks/results
