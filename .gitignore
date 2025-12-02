@@ -28,3 +28,4 @@ coverage.html
 volt.db
 demo.gif
 *.tape
+benchmarks/results
