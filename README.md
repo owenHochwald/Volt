@@ -12,8 +12,7 @@
 
 [Installation](#installation) • [Why Volt?](#why-volt)
 
-<!-- Add your demo.gif here once created -->
-<!-- ![Demo](demo.gif) -->
+![Demo](demo.gif)
 
 </div>
 
@@ -42,16 +41,6 @@ Volt is a **high-performance, keyboard-driven HTTP client** that lives in your t
 | **Memory footprint** | ~500MB | ~300MB | ~50MB | <5MB | **~15MB** |
 | **Startup time** | ~3s | ~2s | <1s | instant | **instant** |
 
-### What makes Volt different?
-
-**Speed First** - Built in Go with a concurrent architecture that handles HTTP requests asynchronously. Peak performance: **213K req/sec** with 4µs latency.
-
-**Keyboard-Driven** - Navigate, edit, and send requests entirely with your keyboard. Vim-inspired motions (h/j/k/l) eliminate the need for a mouse.
-
-**Terminal Native** - No Electron, no browser overhead. A single 15MB binary that integrates seamlessly into your terminal workflow.
-
-**Beautiful Responses** - Syntax-highlighted JSON/XML/HTML with color-coded status codes, automatic formatting, and scrollable views.
-
 ## Performance
 
 Volt is built for raw speed. The core engine is designed to minimize memory allocations and maximize throughput.
@@ -77,62 +66,44 @@ Volt is built for raw speed. The core engine is designed to minimize memory allo
 | **50** | **561.8** | 144.0         | **3.9x faster** |
 | 100             | 877.5        | 294.9         | 3.0x faster        |
 
-* You can test this with the included `benchmark-remote.sh` script.*
+* You can test this with the included `benchmark-remote.sh` script.
 
 
 ---
 
 ## Installation
 
-### (WIP) Homebrew (macOS & Linux) 
-
-```bash
-brew install owenHochwald/volt/volt
-```
-
-### Pre-built Binaries
-
-Download the latest release for your platform from the [releases page](https://github.com/owenHochwald/Volt/releases/latest).
-
-#### macOS
-
-```bash
-# Intel Macs
-curl -LO https://github.com/owenHochwald/Volt/releases/latest/download/volt_0.1.0_darwin_amd64.tar.gz
-tar -xzf volt_0.1.0_darwin_amd64.tar.gz
-chmod +x volt
-sudo mv volt /usr/local/bin/
-
-# Apple Silicon Macs (M1/M2/M3/M4)
-curl -LO https://github.com/owenHochwald/Volt/releases/latest/download/volt_0.1.0_darwin_arm64.tar.gz
-tar -xzf volt_0.1.0_darwin_arm64.tar.gz
-chmod +x volt
-sudo mv volt /usr/local/bin/
-```
-
-#### Linux
-
-```bash
-# x86_64
-curl -LO https://github.com/owenHochwald/Volt/releases/latest/download/volt_0.1.0_linux_amd64.tar.gz
-tar -xzf volt_0.1.0_linux_amd64.tar.gz
-chmod +x volt
-sudo mv volt /usr/local/bin/
-
-# ARM64
-curl -LO https://github.com/owenHochwald/Volt/releases/latest/download/volt_0.1.0_linux_arm64.tar.gz
-tar -xzf volt_0.1.0_linux_arm64.tar.gz
-chmod +x volt
-sudo mv volt /usr/local/bin/
-```
-
-#### Windows
-
-Download `volt_0.1.0_windows_amd64.zip` from the [releases page](https://github.com/owenHochwald/Volt/releases/latest), extract it, and add `volt.exe` to your PATH.
-
-### Build from Source
-
 **Prerequisites:** Go 1.25 or higher
+
+### Option 1: Download and Build from Release
+
+1. **Download the source code** from the [releases page](https://github.com/owenHochwald/Volt/releases/latest)
+    - Download either the `.tar.gz` or `.zip` source code archive
+
+2. **Extract the archive**
+   ```bash
+   # For .tar.gz
+   tar -xzf volt-v0.1.0.tar.gz
+   cd volt-0.1.0
+
+   # For .zip
+   unzip volt-v0.1.0.zip
+   cd volt-0.1.0
+   ```
+
+3. **Build and install**
+   ```bash
+   # Build and install system-wide to /usr/local/bin
+   make install
+
+   # Or just build locally without installing
+   make build
+   ./volt
+   ```
+
+### Option 2: Clone and Build (Development)
+
+If you want to contribute or build from the latest source:
 
 ```bash
 # Clone the repository
@@ -154,16 +125,6 @@ Once installed, simply run:
 ```bash
 volt
 ```
-
-This will launch the TUI interface where you can start making HTTP requests.
-
-### Vim Philosophy
-
-Volt embraces Vim's modal efficiency:
-- Navigation uses h/j/k/l where applicable
-- Common actions are single-key commands
-- Esc always returns you to a safe state
-- Focus is indicated visually, eliminating mode confusion
 
 
 ## CLI Load Testing
