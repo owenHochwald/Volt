@@ -32,7 +32,6 @@ func (c *BenchConfig) Validate() error {
 	}
 
 	// Duration and TotalRequests are mutually exclusive
-	// At least one must be set
 	if c.Duration == 0 && c.TotalRequests == 0 {
 		return errors.New("must specify either -d (duration) or -n (total requests)")
 	}
