@@ -13,13 +13,13 @@ func (m ShortcutPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		// Direct tab access
 		case "1":
-			m.activeTab = 0
+			m.activeTab = int(Global)
 		case "2":
-			m.activeTab = 1
+			m.activeTab = int(Sidebar)
 		case "3":
-			m.activeTab = 2
+			m.activeTab = int(Request)
 		case "4":
-			m.activeTab = 3
+			m.activeTab = int(Response)
 
 		// Tab navigation (vim style)
 		case "h", tea.KeyLeft.String(), tea.KeyShiftTab.String():
