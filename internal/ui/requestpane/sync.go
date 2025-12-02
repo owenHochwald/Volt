@@ -94,6 +94,7 @@ func (m *RequestPane) buildJobConfig() (*http.JobConfig, error) {
 		TotalRequests: totalRequests,
 		QPS:           qps,
 		Timeout:       timeout,
+		StreamUpdates: true,
 	}, nil
 }
 
