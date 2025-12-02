@@ -11,14 +11,16 @@ var (
 	darkPurple = lipgloss.Color("#4C1D95")
 	deepViolet = lipgloss.Color("#5B21B6")
 	dimGray    = lipgloss.Color("240")
-	keyStyle   = lipgloss.NewStyle().Foreground(darkPurple).Bold(true)
 
-	ErrorStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("160")).
-			Background(lipgloss.Color("52"))
+	InactiveTab = lipgloss.NewStyle().
+			Padding(0, 1).
+			Foreground(lipgloss.Color("240")) // dimGray
 
-	FocusedStyle   = lipgloss.NewStyle().Foreground(focusColor)
-	UnfocusedStyle = lipgloss.NewStyle().Foreground(unfocusColor)
+	ActiveTab = lipgloss.NewStyle().
+			Padding(0, 2).
+			Background(lipgloss.Color("98")). // darkPurple
+			Foreground(lipgloss.Color("255")).
+			Bold(true)
 
 	FocusedButton = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("205")).
@@ -27,9 +29,6 @@ var (
 	UnfocusedButton = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("240"))
 
-	DocStyle = lipgloss.NewStyle().Margin(1, 2)
-
-	// TODO: add parent base style
 	HelpStyle = lipgloss.NewStyle().
 			Margin(1, 2)
 

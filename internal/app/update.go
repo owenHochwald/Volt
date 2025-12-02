@@ -6,6 +6,7 @@ import (
 	"github.com/owenHochwald/volt/internal/ui"
 	"github.com/owenHochwald/volt/internal/ui/requestpane"
 	"github.com/owenHochwald/volt/internal/ui/responsepane"
+	"github.com/owenHochwald/volt/internal/ui/shortcutpane"
 	"github.com/owenHochwald/volt/internal/utils"
 )
 
@@ -14,6 +15,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		// Handle '?' to toggle help modal
+		if msg.String() == "?" && !m.showHelpModal {
+			m.showHelpModal = true
+			m.shortcutPane.SetFocused(true)
+			return m, nil
+		}
+
+		// If help modal is open, route ALL messages to it
+		if m.showHelpModal {
+			var shortcutModel tea.Model
+			shortcutModel, cmd = m.shortcutPane.Update(msg)
+			m.shortcutPane = shortcutModel.(shortcutpane.ShortcutPane)
+			return m, cmd
+		}
+
+		// Existing key handling (only when modal is closed)
 		switch msg.Type {
 		case tea.KeyShiftTab:
 			m.focusedPanel = (m.focusedPanel + 1) % 3
@@ -35,6 +52,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		}
+	case shortcutpane.CloseHelpModalMsg:
+		m.showHelpModal = false
+		m.shortcutPane.SetFocused(false)
+		return m, nil
+
 	case http.ResultMsg:
 		m.requestPane.ResultMsgCleanup()
 		m.responsePane.SetResponse(msg.Response)
@@ -100,25 +122,42 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
+
+		// Update shortcut pane dimensions (modal sizing)
+		modalWidth := 60
+		modalHeight := 25
+		if m.width < 80 {
+			modalWidth = m.width - 10
+		}
+		if m.height < 30 {
+			modalHeight = m.height - 5
+		}
+		m.shortcutPane.SetWidth(modalWidth)
+		m.shortcutPane.SetHeight(modalHeight)
+
+		// Existing size handling for other panels
 		m.sidebarPane.SetSize(m.width/2, (m.height-15)/2)
 	}
 
-	if m.focusedPanel == utils.SidebarPanel {
-		var sidebarPaneModel tea.Model
-		sidebarPaneModel, cmd = m.sidebarPane.Update(msg)
-		m.sidebarPane = sidebarPaneModel.(*ui.SidebarPane)
-		return m, cmd
-	} else if m.focusedPanel == utils.RequestPanel {
-		m.requestPane.SetFocused(true)
-		var requestPaneModel tea.Model
-		requestPaneModel, cmd = m.requestPane.Update(msg)
-		m.requestPane = requestPaneModel.(requestpane.RequestPane)
-		return m, cmd
-	} else if m.focusedPanel == utils.ResponsePanel {
-		var responsePaneModel tea.Model
-		responsePaneModel, cmd = m.responsePane.Update(msg)
-		m.responsePane = responsePaneModel.(*responsepane.ResponsePane)
-		return m, cmd
+	// Existing panel update routing (only when help modal is closed)
+	if !m.showHelpModal {
+		if m.focusedPanel == utils.SidebarPanel {
+			var sidebarPaneModel tea.Model
+			sidebarPaneModel, cmd = m.sidebarPane.Update(msg)
+			m.sidebarPane = sidebarPaneModel.(*ui.SidebarPane)
+			return m, cmd
+		} else if m.focusedPanel == utils.RequestPanel {
+			m.requestPane.SetFocused(true)
+			var requestPaneModel tea.Model
+			requestPaneModel, cmd = m.requestPane.Update(msg)
+			m.requestPane = requestPaneModel.(requestpane.RequestPane)
+			return m, cmd
+		} else if m.focusedPanel == utils.ResponsePanel {
+			var responsePaneModel tea.Model
+			responsePaneModel, cmd = m.responsePane.Update(msg)
+			m.responsePane = responsePaneModel.(*responsepane.ResponsePane)
+			return m, cmd
+		}
 	}
 
 	return m, cmd

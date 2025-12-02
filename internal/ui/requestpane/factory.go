@@ -64,7 +64,7 @@ func NewURLInput(db *storage.SQLiteStorage) textinput.Model {
 	)
 
 	ti := NewConfiguredTextInput(TextInputConfig{
-		Value:           "h",
+		Value:           "",
 		CharLimit:       40,
 		Width:           60,
 		Suggestions:     urls,
