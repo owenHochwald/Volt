@@ -103,6 +103,11 @@ make build
 ./volt
 ```
 
+### Option 3
+```bash
+go install github.com/owenHochwald/Volt/cmd/volt@latest
+```
+
 ## Quick Start
 
 Once installed, simply run:
