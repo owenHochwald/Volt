@@ -41,32 +41,7 @@ Volt is a **high-performance, keyboard-driven HTTP client** that lives in your t
 | **Memory footprint** | ~500MB | ~300MB | ~50MB | <5MB | **~15MB** |
 | **Startup time** | ~3s | ~2s | <1s | instant | **instant** |
 
-## Performance
 
-Volt is built for raw speed. The core engine is designed to minimize memory allocations and maximize throughput.
-### Benchmarks (Apple M4)
-
-| Concurrency | Req/Sec | Allocations |
-|-------------|--------|-------------|
-| 10          | 141,533 | 0 B/op      |
-| 50          | 208,035   | 0 B/op      |
-| **100**     | **213,885**   | **0 B/op**  |
-| 500         | 92,891   | 4 B/op      |
-
-> **Note:** At peak performance (100 workers), Volt can generate **1 Million requests in < 5 seconds**.
-
-*Benchmarks run against a zero-latency local endpoint to measure engine overhead.*
-
-### Real-World Benchmarks vs. `hey` ⚡
-
-
-| Connections (C) | Volt Req/Sec | `hey` Req/Sec | **Volt Advantage** |
-|:---------------:|:------------:|:-------------:|:------------------:|
-| 10              | 137.9        | 145.3         | 0.95x              |
-| **50** | **561.8** | 144.0         | **3.9x faster** |
-| 100             | 877.5        | 294.9         | 3.0x faster        |
-
-* You can test this with the included `benchmark-remote.sh` script.
 
 
 ---
