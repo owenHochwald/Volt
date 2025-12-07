@@ -25,7 +25,7 @@ func setupServer(latency time.Duration) (string, func()) {
 
 	server := &fasthttp.Server{
 		Handler:               handler,
-		NoDefaultServerHeader: true, // Reduce overhead
+		NoDefaultServerHeader: true,
 		DisableKeepalive:      false,
 	}
 
@@ -39,17 +39,12 @@ func setupServer(latency time.Duration) (string, func()) {
 	}
 }
 
-// BenchmarkEngine_Throughput measures maximum request throughput at different concurrency levels.
+// BenchmarkEngine_SingleRequest measures allocations per individual request execution.
 //
 // Usage:
 //
-//	go test -bench=BenchmarkEngine_Throughput -benchmem ./internal/http
-//
-// To run a soak test (e.g., 10 seconds):
-//
-//	go test -bench=BenchmarkEngine_Throughput -benchtime=10s ./internal/http
-func BenchmarkEngine_Throughput(b *testing.B) {
-	// Start a server with 0 latency to measure pure engine overhead
+//	go test -bench=BenchmarkEngine_SingleRequest -benchmem ./internal/http
+func BenchmarkEngine_SingleRequest(b *testing.B) {
 	serverURL, stop := setupServer(0)
 	defer stop()
 
@@ -57,47 +52,76 @@ func BenchmarkEngine_Throughput(b *testing.B) {
 	req.URL = serverURL
 	req.Method = "GET"
 
-	concurrencyLevels := []int{10, 50, 100, 500, 1000}
+	concurrencyLevels := []int{1, 10, 50, 100}
 
 	for _, concurrency := range concurrencyLevels {
 		b.Run(fmt.Sprintf("Concurrency_%d", concurrency), func(b *testing.B) {
-			batchSize := 10000
-			if b.N < batchSize {
-				batchSize = b.N
-			}
-
 			b.ReportAllocs()
 			b.ResetTimer()
 
-			var totalRequestsProcessed int64
-
-			// We loop until we have processed b.N requests
-			for totalRequestsProcessed < int64(b.N) {
-				currentBatch := batchSize
-				remaining := int64(b.N) - totalRequestsProcessed
-				if remaining < int64(batchSize) {
-					currentBatch = int(remaining)
-				}
-
+			for i := 0; i < b.N; i++ {
 				updates := make(chan *LoadTestStats, 100)
 
-				// Drain stats asynchronously
+				done := make(chan struct{})
 				go func() {
 					for range updates {
 					}
+					close(done)
 				}()
 
 				config := &JobConfig{
 					Request:       req,
 					Concurrency:   concurrency,
-					TotalRequests: currentBatch,
+					TotalRequests: concurrency,
 					Timeout:       5 * time.Second,
 				}
 
 				config.Run(updates)
-
-				totalRequestsProcessed += int64(currentBatch)
+				<-done
 			}
+		})
+	}
+}
+
+// BenchmarkEngine_Throughput measures maximum request throughput. Must start
+// a test server.
+//
+// Usage:
+//
+//	go test -bench=BenchmarkEngine_Throughput -benchmem ./internal/http
+//	go test -bench=BenchmarkEngine_Throughput -benchtime=10s ./internal/http
+func BenchmarkEngine_Throughput(b *testing.B) {
+	serverURL, stop := setupServer(0)
+	defer stop()
+
+	req := NewDefaultRequest()
+	req.URL = serverURL
+	req.Method = "GET"
+
+	concurrencyLevels := []int{10, 50, 100, 500}
+
+	for _, concurrency := range concurrencyLevels {
+		b.Run(fmt.Sprintf("Concurrency_%d", concurrency), func(b *testing.B) {
+			b.ResetTimer()
+
+			updates := make(chan *LoadTestStats, 100)
+			done := make(chan struct{})
+
+			go func() {
+				for range updates {
+				}
+				close(done)
+			}()
+
+			config := &JobConfig{
+				Request:       req,
+				Concurrency:   concurrency,
+				TotalRequests: b.N,
+				Timeout:       5 * time.Second,
+			}
+
+			config.Run(updates)
+			<-done
 
 			b.StopTimer()
 
@@ -108,8 +132,7 @@ func BenchmarkEngine_Throughput(b *testing.B) {
 	}
 }
 
-// BenchmarkEngine_Latency handles a scenario where the server is slow (simulating real world).
-// This tests how efficient the engine is at waiting.
+// BenchmarkEngine_Latency tests performance with slow server responses.
 func BenchmarkEngine_Latency(b *testing.B) {
 	serverURL, stop := setupServer(50 * time.Millisecond)
 	defer stop()
@@ -118,37 +141,30 @@ func BenchmarkEngine_Latency(b *testing.B) {
 	req.URL = serverURL
 	req.Method = "GET"
 
-	concurrency := 200
+	concurrency := 100
 
 	b.ResetTimer()
-	b.ReportAllocs()
 
-	var totalRequestsProcessed int64
-	batchSize := 1000
+	updates := make(chan *LoadTestStats, 100)
+	done := make(chan struct{})
 
-	for totalRequestsProcessed < int64(b.N) {
-		currentBatch := batchSize
-		remaining := int64(b.N) - totalRequestsProcessed
-		if remaining < int64(batchSize) {
-			currentBatch = int(remaining)
+	go func() {
+		for range updates {
 		}
+		close(done)
+	}()
 
-		updates := make(chan *LoadTestStats, 100)
-		go func() {
-			for range updates {
-			}
-		}()
-
-		config := &JobConfig{
-			Request:       req,
-			Concurrency:   concurrency,
-			TotalRequests: currentBatch,
-			Timeout:       10 * time.Second, // Increased timeout for latency
-		}
-
-		config.Run(updates)
-		totalRequestsProcessed += int64(currentBatch)
+	config := &JobConfig{
+		Request:       req,
+		Concurrency:   concurrency,
+		TotalRequests: b.N,
+		Timeout:       10 * time.Second,
 	}
+
+	config.Run(updates)
+	<-done
+
+	b.StopTimer()
 
 	elapsed := b.Elapsed().Seconds()
 	rps := float64(b.N) / elapsed
