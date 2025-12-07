@@ -20,7 +20,7 @@
 
 ## Overview
 
-Volt is a **high-performance, keyboard-driven HTTP client** that lives in your terminal. Built with Go and the [Bubble Tea](https://github.com/charmbracelet/bubbletea) TUI framework, it delivers a responsive interface without sacrificing the speed and simplicity of the command line.
+Volt is a **keyboard-driven HTTP client** that lives in your terminal. Built as a project with Go and the [Bubble Tea](https://github.com/charmbracelet/bubbletea) TUI framework, and high-performance HTTP client design.
 
 **Perfect for developers who:**
 - Live in the terminal and hate context switching
@@ -28,6 +28,8 @@ Volt is a **high-performance, keyboard-driven HTTP client** that lives in your t
 - Love Vim keybindings and keyboard-driven workflows
 - Need a fast, scriptable HTTP client with a beautiful UI
 
+
+> **Note**: This is an active learning project. Performance optimizations are ongoing, and contributions/feedback are welcome :)
 ## Why Volt?
 
 |  | Postman | Insomnia | HTTPie | curl | **Volt** |
@@ -41,8 +43,16 @@ Volt is a **high-performance, keyboard-driven HTTP client** that lives in your t
 | **Memory footprint** | ~500MB | ~300MB | ~50MB | <5MB | **~15MB** |
 | **Startup time** | ~3s | ~2s | <1s | instant | **instant** |
 
+### Throughput Benchmarks (Apple M4)
 
+*Testing against a zero-latency local endpoint to measure engine overhead:*
 
+| Concurrency | Requests/Sec |
+|-------------|--------------|
+| 10          | 141,533      |
+| 50          | 208,035      |
+| **100**     | **213,885**  |
+| 500         | 92,891       |
 
 ---
 
