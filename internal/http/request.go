@@ -78,9 +78,6 @@ func (r *Request) Validate() error {
 	}
 
 	if r.URL != "" {
-		if len(r.URL) > 300 {
-			return fmt.Errorf("url too long: %s", r.URL)
-		}
 		if r.URL[0:4] != "http" {
 			return fmt.Errorf("invalid url: %s", r.URL)
 		}
