@@ -16,7 +16,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		// Handle '?' to toggle help modal
-		if msg.String() == "?" && !m.showHelpModal {
+		if msg.String() == "?" && !m.showHelpModal && m.focusedPanel != utils.RequestPanel {
 			m.showHelpModal = true
 			m.shortcutPane.SetFocused(true)
 			return m, nil
