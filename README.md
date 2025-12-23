@@ -105,7 +105,7 @@ make build
 
 ### Option 3
 ```bash
-go install github.com/owenHochwald/Volt/cmd/volt@latest
+go install github.com/owenHochwald/volt/cmd/volt@latest
 ```
 
 ## Quick Start
