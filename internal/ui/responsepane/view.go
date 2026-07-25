@@ -59,6 +59,10 @@ func (m ResponsePane) renderLoadTestView() string {
 		status += "Complete"
 	}
 	statusBar := loadTestStatusStyle.Render(status)
+	if m.LoadTestStats.FailedRequests > 0 {
+		status = fmt.Sprintf("%s • %d failed", status, m.LoadTestStats.FailedRequests)
+		statusBar = errorStyle.Render(status)
+	}
 	b.WriteString(statusBar)
 	b.WriteString("\n")
 
