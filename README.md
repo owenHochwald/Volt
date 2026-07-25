@@ -89,7 +89,7 @@ Once installed, launch Volt's interactive interface:
 volt
 ```
 **Basic usage:**
-- Type a URL and press `Ctrl+Enter` or `Alt+Enter` to make a request
+- Type a URL and press `Alt+Enter` (`Option+Enter` on macOS) to make a request
 - Press `?` to see all keybindings
 - Press `Esc` twice to quit, or `Ctrl+C` to quit immediately
 

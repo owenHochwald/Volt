@@ -18,8 +18,10 @@ anywhere to see every shortcut.
 | `Ctrl+C` | Quit immediately and cancel an active load test |
 | `Esc Esc` | Quit after a deliberate double press |
 | `F1` | Show all shortcuts |
-| `Alt+H` | Focus the previous panel |
-| `Alt+L` | Focus the next panel |
+| `Ctrl+E` | Focus the previous panel |
+| `Ctrl+W` | Focus the next panel |
+| `Alt+H` | Focus the previous panel (alias) |
+| `Alt+L` | Focus the next panel (alias) |
 
 The first `Esc` closes help or returns focus to the sidebar and displays a quit
 prompt. A different key or the 750-millisecond timeout cancels the quit
@@ -28,15 +30,18 @@ sequence.
 `q` never quits Volt. It is inserted normally while editing text, does nothing
 in non-editing panels, and closes the help overlay when the overlay is open.
 
+`Ctrl+E` and `Ctrl+W` work with classic terminal input and are available in
+every panel, including while a request field is focused.
+
 ### Alt on macOS
 
-macOS calls the Alt key `Option`. The panel bindings are therefore
+macOS calls the Alt key `Option`. The optional panel aliases are therefore
 `Option+H` and `Option+L`.
 
-Your terminal must send Option as Alt/Meta, sometimes described as sending an
-Escape prefix. If `Option+H` produces a special character such as `˙`, enable
-the terminal profile's Option-as-Meta or `Esc+` setting. This is a terminal
-configuration; Volt receives the same `Alt+H` event on every platform.
+Volt matches Bubble Tea v2's structured keystroke data, so an Option event with
+associated macOS text such as `˙` or `¬` still matches its physical `h` or `l`
+key. If the terminal sends only text and omits the Option modifier entirely,
+use the terminal-independent `Ctrl+E` and `Ctrl+W` bindings.
 
 ## Sidebar
 
@@ -45,6 +50,8 @@ configuration; Volt receives the same `Alt+H` event on every platform.
 | `Enter` | Open the selected saved request |
 | `j` | Select the next request |
 | `k` | Select the previous request |
+| `[count]j` | Move down by a count, wrapping through the list |
+| `[count]k` | Move up by a count, wrapping through the list |
 | `g` | Select the first request |
 | `G` | Select the last request |
 | `d` | Delete the selected request |
@@ -58,14 +65,17 @@ configuration; Volt receives the same `Alt+H` event on every platform.
 | `Shift+Tab` | Focus the previous field |
 | `h` | Select the previous HTTP method |
 | `l` | Select the next HTTP method |
-| `Ctrl+Enter` or `Alt+Enter` | Send the request |
+| `Alt+Enter` (`Option+Enter` on macOS) | Send the request |
+| `Enter` | Send when the `→ Send` control is focused |
 | `Ctrl+S` | Save the request |
 | `Ctrl+L` | Toggle load-test mode |
 | `?` | Show request shortcuts when not editing |
 
-Plain `Enter` remains available to edit content or accept suggestions. Arrow
-keys remain available to text editors. Request bodies are edited as raw text,
-so JSON, XML, GraphQL, and other formats do not require key/value conversion.
+Plain `Enter` remains available to edit content or accept suggestions while a
+text field is focused. It submits only when the `→ Send` control is focused.
+Arrow keys remain available to text editors. Request bodies are edited as raw
+text, so JSON, XML, GraphQL, and other formats do not require key/value
+conversion.
 
 While a text field is focused, printable shortcut characters such as `?`, `q`,
 `h`, and `l` are inserted into the field instead of triggering panel actions.
