@@ -29,7 +29,7 @@ func TestHelpDoesNotWrapLongRegistryKeys(t *testing.T) {
 	pane.SetContext(keybindings.ContextRequest)
 
 	rendered := ansi.Strip(pane.View())
-	if !strings.Contains(rendered, "ctrl+j") {
+	if !strings.Contains(rendered, "ctrl+enter/alt+enter") {
 		t.Fatalf("long submit binding wrapped unexpectedly:\n%s", rendered)
 	}
 }

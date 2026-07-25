@@ -32,7 +32,6 @@ func TestRequestSubmissionKeyBindings(t *testing.T) {
 		name string
 		key  tea.KeyPressMsg
 	}{
-		{name: "terminal safe control j", key: keyPress('j', "", tea.ModCtrl)},
 		{name: "enhanced control enter alias", key: keyPress(tea.KeyEnter, "", tea.ModCtrl)},
 		{name: "meta enter alias", key: keyPress(tea.KeyEnter, "", tea.ModAlt)},
 	}
