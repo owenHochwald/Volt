@@ -33,3 +33,48 @@ func TestHelpDoesNotWrapLongRegistryKeys(t *testing.T) {
 		t.Fatalf("long submit binding wrapped unexpectedly:\n%s", rendered)
 	}
 }
+
+func TestReferencePanelShowsCurrentRegistryBindings(t *testing.T) {
+	tests := []struct {
+		name     string
+		context  keybindings.Context
+		expected []string
+	}{
+		{
+			name:     "global panel and quit commands",
+			context:  keybindings.ContextGlobal,
+			expected: []string{"ctrl+w h/l", "alt+h", "alt+l", "esc esc"},
+		},
+		{
+			name:     "sidebar count navigation",
+			context:  keybindings.ContextSidebar,
+			expected: []string{"0-9", "prefix movement count", "j", "k"},
+		},
+		{
+			name:     "request submission and activation",
+			context:  keybindings.ContextRequest,
+			expected: []string{"ctrl+enter/alt+enter", "enter", "activate focused control"},
+		},
+		{
+			name:     "response load test cancellation",
+			context:  keybindings.ContextResponse,
+			expected: []string{"ctrl+x", "cancel load test"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pane := SetupShortcutPane(keybindings.DefaultKeyMap())
+			pane.SetWidth(100)
+			pane.SetHeight(30)
+			pane.SetContext(tt.context)
+			rendered := ansi.Strip(pane.View())
+
+			for _, expected := range tt.expected {
+				if !strings.Contains(rendered, expected) {
+					t.Errorf("reference panel does not contain %q:\n%s", expected, rendered)
+				}
+			}
+		})
+	}
+}
