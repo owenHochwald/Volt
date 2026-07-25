@@ -26,7 +26,6 @@ const (
 	ActionQuit            ActionID = "quit"
 	ActionGlobalHelp      ActionID = "global_help"
 	ActionContextHelp     ActionID = "context_help"
-	ActionPanelCommand    ActionID = "panel_command"
 	ActionPreviousPanel   ActionID = "previous_panel"
 	ActionNextPanel       ActionID = "next_panel"
 	ActionLoadRequest     ActionID = "load_request"
@@ -146,9 +145,8 @@ func DefaultRegistry() Registry {
 		{ActionForceQuit, []Context{ContextGlobal}, []string{"ctrl+c"}, "ctrl+c", "quit immediately", 100},
 		{ActionQuit, []Context{ContextGlobal}, []string{"esc"}, "esc esc", "back / quit", 98},
 		{ActionGlobalHelp, []Context{ContextGlobal}, []string{"f1"}, "f1", "show all shortcuts", 95},
-		{ActionPanelCommand, []Context{ContextGlobal}, []string{"ctrl+w"}, "ctrl+w h/l", "move between panels", 92},
-		{ActionPreviousPanel, []Context{ContextGlobal}, []string{"alt+h"}, "alt+h", "previous panel", 90},
-		{ActionNextPanel, []Context{ContextGlobal}, []string{"alt+l"}, "alt+l", "next panel", 90},
+		{ActionPreviousPanel, []Context{ContextGlobal}, []string{"ctrl+e", "alt+h"}, "ctrl+e/alt+h", "previous panel", 90},
+		{ActionNextPanel, []Context{ContextGlobal}, []string{"ctrl+w", "alt+l"}, "ctrl+w/alt+l", "next panel", 90},
 
 		{ActionContextHelp, []Context{ContextSidebar, ContextRequest, ContextResponse}, []string{"?"}, "?", "show context help", 75},
 
@@ -160,7 +158,7 @@ func DefaultRegistry() Registry {
 		{ActionNavigateFirst, []Context{ContextSidebar}, []string{"g"}, "g", "first request", 55},
 		{ActionNavigateLast, []Context{ContextSidebar}, []string{"G"}, "G", "last request", 55},
 
-		{ActionSubmit, []Context{ContextRequest}, []string{"ctrl+enter", "alt+enter"}, "ctrl+enter/alt+enter", "send request", 70},
+		{ActionSubmit, []Context{ContextRequest}, []string{"alt+enter"}, "alt+enter", "send request", 70},
 		{ActionSaveRequest, []Context{ContextRequest}, []string{"ctrl+s"}, "ctrl+s", "save request", 65},
 		{ActionToggleLoadTest, []Context{ContextRequest}, []string{"ctrl+l"}, "ctrl+l", "toggle load test", 65},
 		{ActionNextField, []Context{ContextRequest}, []string{"tab"}, "tab", "next field", 60},

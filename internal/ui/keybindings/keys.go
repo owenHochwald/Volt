@@ -12,7 +12,6 @@ type KeyMap struct {
 	Quit          key.Binding
 	GlobalHelp    key.Binding
 	ContextHelp   key.Binding
-	PanelCommand  key.Binding
 	PreviousPanel key.Binding
 	NextPanel     key.Binding
 
@@ -62,7 +61,6 @@ func DefaultKeyMap() KeyMap {
 		Quit:             registry.MustBinding(ActionQuit),
 		GlobalHelp:       registry.MustBinding(ActionGlobalHelp),
 		ContextHelp:      registry.MustBinding(ActionContextHelp),
-		PanelCommand:     registry.MustBinding(ActionPanelCommand),
 		PreviousPanel:    registry.MustBinding(ActionPreviousPanel),
 		NextPanel:        registry.MustBinding(ActionNextPanel),
 		LoadRequest:      registry.MustBinding(ActionLoadRequest),

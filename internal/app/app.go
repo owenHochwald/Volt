@@ -38,9 +38,6 @@ type Model struct {
 	notification     ui.Notification
 	quitArmed        bool
 	quitSequence     uint64
-
-	panelNavigationArmed    bool
-	panelNavigationSequence uint64
 }
 
 func SetupModel(db *storage.SQLiteStorage) Model {

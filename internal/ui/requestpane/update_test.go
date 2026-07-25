@@ -32,7 +32,6 @@ func TestRequestSubmissionKeyBindings(t *testing.T) {
 		name string
 		key  tea.KeyPressMsg
 	}{
-		{name: "enhanced control enter alias", key: keyPress(tea.KeyEnter, "", tea.ModCtrl)},
 		{name: "meta enter alias", key: keyPress(tea.KeyEnter, "", tea.ModAlt)},
 	}
 
@@ -175,7 +174,7 @@ func TestInvalidHeadersBlockSubmissionAndSurfaceError(t *testing.T) {
 	pane.URLInput.SetValue("https://example.com")
 	pane.Headers.SetValue("missing delimiter")
 
-	updated, cmd := pane.Update(keyPress(tea.KeyEnter, "", tea.ModCtrl))
+	updated, cmd := pane.Update(keyPress(tea.KeyEnter, "", tea.ModAlt))
 
 	if updated.RequestInProgress {
 		t.Fatal("invalid headers started a request")
@@ -199,7 +198,7 @@ func TestInvalidLoadTestConfigBlocksStartAndSurfacesError(t *testing.T) {
 	pane.URLInput.SetValue("https://example.com")
 	pane.LoadTestConcurrency.SetValue("not-a-number")
 
-	updated, cmd := pane.Update(keyPress(tea.KeyEnter, "", tea.ModCtrl))
+	updated, cmd := pane.Update(keyPress(tea.KeyEnter, "", tea.ModAlt))
 
 	if updated.RequestInProgress {
 		t.Fatal("invalid load-test config remained in progress")

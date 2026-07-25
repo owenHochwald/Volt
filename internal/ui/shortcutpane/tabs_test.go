@@ -29,7 +29,7 @@ func TestHelpDoesNotWrapLongRegistryKeys(t *testing.T) {
 	pane.SetContext(keybindings.ContextRequest)
 
 	rendered := ansi.Strip(pane.View())
-	if !strings.Contains(rendered, "ctrl+enter/alt+enter") {
+	if !strings.Contains(rendered, "alt+enter") {
 		t.Fatalf("long submit binding wrapped unexpectedly:\n%s", rendered)
 	}
 }
@@ -43,7 +43,7 @@ func TestReferencePanelShowsCurrentRegistryBindings(t *testing.T) {
 		{
 			name:     "global panel and quit commands",
 			context:  keybindings.ContextGlobal,
-			expected: []string{"ctrl+w h/l", "alt+h", "alt+l", "esc esc"},
+			expected: []string{"ctrl+e/alt+h", "ctrl+w/alt+l", "esc esc"},
 		},
 		{
 			name:     "sidebar count navigation",
@@ -53,7 +53,7 @@ func TestReferencePanelShowsCurrentRegistryBindings(t *testing.T) {
 		{
 			name:     "request submission and activation",
 			context:  keybindings.ContextRequest,
-			expected: []string{"ctrl+enter/alt+enter", "enter", "activate focused control"},
+			expected: []string{"alt+enter", "enter", "activate focused control"},
 		},
 		{
 			name:     "response load test cancellation",
