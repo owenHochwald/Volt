@@ -1,7 +1,7 @@
 package requestpane
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/owenHochwald/Volt/internal/ui"
 	"github.com/owenHochwald/Volt/internal/ui/keybindings"
 )
@@ -10,7 +10,7 @@ import (
 type LoadTestMode struct{}
 
 // HandleInput handles keyboard input in load test mode
-func (ltm *LoadTestMode) HandleInput(m *RequestPane, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (ltm *LoadTestMode) HandleInput(m *RequestPane, msg tea.KeyPressMsg) (*RequestPane, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	// Check for special keybindings FIRST before delegating to text components
@@ -74,8 +74,8 @@ func (ltm *LoadTestMode) HandleInput(m *RequestPane, msg tea.KeyMsg) (tea.Model,
 }
 
 // handleSubmit handles the submit button in load test mode
-func (ltm *LoadTestMode) handleSubmit(m *RequestPane, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if msg.String() == tea.KeyEnter.String() || keybindings.Matches(msg, m.keys.SendRequest) {
+func (ltm *LoadTestMode) handleSubmit(m *RequestPane, msg tea.KeyPressMsg) (*RequestPane, tea.Cmd) {
+	if msg.String() == "enter" || keybindings.Matches(msg, m.keys.SendRequest) {
 		if m.RequestInProgress {
 			return m, nil
 		}

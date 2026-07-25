@@ -3,10 +3,10 @@ package requestpane
 import (
 	"time"
 
-	"github.com/charmbracelet/bubbles/stopwatch"
-	"github.com/charmbracelet/bubbles/textarea"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/stopwatch"
+	"charm.land/bubbles/v2/textarea"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
 	"github.com/owenHochwald/Volt/internal/http"
 	"github.com/owenHochwald/Volt/internal/storage"
 	"github.com/owenHochwald/Volt/internal/ui"
@@ -98,7 +98,7 @@ func (m *RequestPane) GetCurrentMethod() string {
 // ResultMsgCleanup resets the stopwatch and request state after a response
 func (m *RequestPane) ResultMsgCleanup() {
 	m.Stopwatch.Stop()
-	m.Stopwatch = stopwatch.NewWithInterval(10 * time.Millisecond)
+	m.Stopwatch = stopwatch.New(stopwatch.WithInterval(10 * time.Millisecond))
 	m.RequestInProgress = false
 }
 

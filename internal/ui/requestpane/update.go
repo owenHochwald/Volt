@@ -1,7 +1,7 @@
 package requestpane
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/owenHochwald/Volt/internal/http"
 	"github.com/owenHochwald/Volt/internal/ui"
 	"github.com/owenHochwald/Volt/internal/ui/keybindings"
@@ -9,7 +9,7 @@ import (
 )
 
 // Update handles updates to the request pane
-func (m RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m RequestPane) Update(msg tea.Msg) (RequestPane, tea.Cmd) {
 	var cmd tea.Cmd
 	m.Stopwatch, cmd = m.Stopwatch.Update(msg)
 
@@ -18,7 +18,7 @@ func (m RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.reinitRequestPane(msg.Request)
 		return m, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		if !m.PanelFocused {
 			return m, nil
 		}
@@ -43,10 +43,7 @@ func (m RequestPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Delegate to current mode strategy
 		model, cmd := m.currentMode.HandleInput(&m, msg)
-		if ptr, ok := model.(*RequestPane); ok {
-			return *ptr, cmd
-		}
-		return m, cmd
+		return *model, cmd
 	}
 
 	m.syncRequest()

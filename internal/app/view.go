@@ -1,12 +1,13 @@
 package app
 
 import (
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/owenHochwald/Volt/internal/ui"
 	"github.com/owenHochwald/Volt/internal/utils"
 )
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
 	sidebarWidth := 20
 	contentHeight := m.height - 5
 
@@ -44,10 +45,17 @@ func (m Model) View() string {
 
 	// If help modal is open, overlay it on top
 	if m.showHelpModal {
-		return m.overlayHelpModal()
+		return newView(m.overlayHelpModal())
 	}
 
-	return mainView
+	return newView(mainView)
+}
+
+func newView(content string) tea.View {
+	view := tea.NewView(content)
+	view.AltScreen = true
+	view.WindowTitle = "Volt"
+	return view
 }
 
 func (m Model) headerView(width int) string {
@@ -89,7 +97,9 @@ func (m Model) overlayHelpModal() string {
 		lipgloss.Center,
 		helpModal,
 		lipgloss.WithWhitespaceChars("░"),
-		lipgloss.WithWhitespaceForeground(lipgloss.Color("236")),
+		lipgloss.WithWhitespaceStyle(
+			lipgloss.NewStyle().Foreground(lipgloss.Color("236")),
+		),
 	)
 
 	return overlay

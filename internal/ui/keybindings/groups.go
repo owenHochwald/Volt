@@ -1,6 +1,6 @@
 package keybindings
 
-import "github.com/charmbracelet/bubbles/key"
+import "charm.land/bubbles/v2/key"
 
 // KeyGroup represents a category of keybindings for help display
 type KeyGroup struct {

@@ -1,20 +1,20 @@
 package responsepane
 
 import (
+	tea "charm.land/bubbletea/v2"
 	"github.com/atotto/clipboard"
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/owenHochwald/Volt/internal/ui/keybindings"
 )
 
 // Update handles Bubble Tea messages and state transitions
-func (m *ResponsePane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *ResponsePane) Update(msg tea.Msg) (*ResponsePane, tea.Cmd) {
 	var (
 		cmd  tea.Cmd
 		cmds []tea.Cmd
 	)
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Direct tab access
 		if keybindings.Matches(msg, m.keys.DirectTab) {
 			switch msg.String() {

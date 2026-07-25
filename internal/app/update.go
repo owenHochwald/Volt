@@ -1,13 +1,11 @@
 package app
 
 import (
+	tea "charm.land/bubbletea/v2"
 	"context"
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/owenHochwald/Volt/internal/http"
 	"github.com/owenHochwald/Volt/internal/ui"
 	"github.com/owenHochwald/Volt/internal/ui/keybindings"
-	"github.com/owenHochwald/Volt/internal/ui/requestpane"
-	"github.com/owenHochwald/Volt/internal/ui/responsepane"
 	"github.com/owenHochwald/Volt/internal/ui/shortcutpane"
 	"github.com/owenHochwald/Volt/internal/utils"
 )
@@ -16,7 +14,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Handle '?' to toggle help modal
 		if keybindings.Matches(msg, m.keys.ShowHelp) && !m.showHelpModal && m.focusedPanel != utils.RequestPanel {
 			m.showHelpModal = true
@@ -26,9 +24,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// If help modal is open, route ALL messages to it
 		if m.showHelpModal {
-			var shortcutModel tea.Model
-			shortcutModel, cmd = m.shortcutPane.Update(msg)
-			m.shortcutPane = shortcutModel.(shortcutpane.ShortcutPane)
+			m.shortcutPane, cmd = m.shortcutPane.Update(msg)
 			return m, cmd
 		}
 
@@ -81,9 +77,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Err != nil {
 			return m, nil
 		}
-		var sidebarModel tea.Model
-		sidebarModel, cmd = m.sidebarPane.Update(msg)
-		m.sidebarPane = sidebarModel.(*ui.SidebarPane)
+		m.sidebarPane, cmd = m.sidebarPane.Update(msg)
 		return m, cmd
 
 	case http.LoadTestStartMsg:
@@ -144,20 +138,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Existing panel update routing (only when help modal is closed)
 	if !m.showHelpModal {
 		if m.focusedPanel == utils.SidebarPanel {
-			var sidebarPaneModel tea.Model
-			sidebarPaneModel, cmd = m.sidebarPane.Update(msg)
-			m.sidebarPane = sidebarPaneModel.(*ui.SidebarPane)
+			m.sidebarPane, cmd = m.sidebarPane.Update(msg)
 			return m, cmd
 		} else if m.focusedPanel == utils.RequestPanel {
 			m.requestPane.SetFocused(true)
-			var requestPaneModel tea.Model
-			requestPaneModel, cmd = m.requestPane.Update(msg)
-			m.requestPane = requestPaneModel.(requestpane.RequestPane)
+			m.requestPane, cmd = m.requestPane.Update(msg)
 			return m, cmd
 		} else if m.focusedPanel == utils.ResponsePanel {
-			var responsePaneModel tea.Model
-			responsePaneModel, cmd = m.responsePane.Update(msg)
-			m.responsePane = responsePaneModel.(*responsepane.ResponsePane)
+			m.responsePane, cmd = m.responsePane.Update(msg)
 			return m, cmd
 		}
 	}

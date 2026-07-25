@@ -1,8 +1,8 @@
 package ui
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type Header struct {
@@ -13,7 +13,7 @@ func (h *Header) Init() tea.Cmd {
 	return nil
 }
 
-func (h *Header) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (h *Header) Update(msg tea.Msg) (*Header, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		h.width = msg.Width

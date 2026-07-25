@@ -1,8 +1,8 @@
 package responsepane
 
 import (
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
 	"github.com/owenHochwald/Volt/internal/http"
 	"github.com/owenHochwald/Volt/internal/ui/keybindings"
 )
@@ -65,11 +65,11 @@ func (m *ResponsePane) ClearLoadTestStats() {
 func (m *ResponsePane) SetHeight(height int) {
 	m.height = height
 	// Viewport needs to be smaller to account for status bar, tabs, etc.
-	m.viewport.Height = height - 5
+	m.viewport.SetHeight(height - 5)
 }
 
 // SetWidth sets the width of the response pane
 func (m *ResponsePane) SetWidth(width int) {
 	m.width = width
-	m.viewport.Width = width
+	m.viewport.SetWidth(width)
 }

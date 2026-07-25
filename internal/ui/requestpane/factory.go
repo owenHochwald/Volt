@@ -1,10 +1,9 @@
 package requestpane
 
 import (
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textarea"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/textarea"
+	"charm.land/bubbles/v2/textinput"
 	"github.com/owenHochwald/Volt/internal/storage"
 )
 
@@ -23,7 +22,7 @@ func NewConfiguredTextInput(config TextInputConfig) textinput.Model {
 	ti := textinput.New()
 	ti.Placeholder = config.Placeholder
 	ti.CharLimit = config.CharLimit
-	ti.Width = config.Width
+	ti.SetWidth(config.Width)
 	ti.ShowSuggestions = config.ShowSuggestions
 
 	if config.Value != "" {
@@ -74,8 +73,8 @@ func NewURLInput(db *storage.SQLiteStorage) textinput.Model {
 	// Really weird hack to make suggestions work
 	km := ti.KeyMap
 	km.AcceptSuggestion = key.NewBinding(key.WithKeys(
-		tea.KeyEnter.String(),
-		tea.KeyRight.String(),
+		"enter",
+		"right",
 	))
 	ti.KeyMap = km
 

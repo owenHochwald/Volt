@@ -3,7 +3,7 @@ package shortcutpane
 import (
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 )
 
 func (m ShortcutPane) View() string {
