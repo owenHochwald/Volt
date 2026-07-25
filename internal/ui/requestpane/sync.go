@@ -1,7 +1,6 @@
 package requestpane
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -21,20 +20,9 @@ func (m *RequestPane) syncRequest() {
 	m.Request.Name = m.NameInput.Value()
 
 	headerMap, headerErrors := utils.ParseKeyValuePairs(m.Headers.Value())
-	bodyMap, bodyErrors := utils.ParseKeyValuePairs(m.Body.Value())
-
-	jsonData, err := json.Marshal(bodyMap)
-	if err != nil {
-		m.ParseErrors = append(m.ParseErrors, "JSON marshal error: "+err.Error())
-		m.Request.Headers = headerMap
-		m.Request.Body = "{}" // Set to valid empty JSON
-		m.ParseErrors = append(m.ParseErrors, headerErrors...)
-		return
-	}
-
 	m.Request.Headers = headerMap
-	m.Request.Body = string(jsonData)
-	m.ParseErrors = append(headerErrors, bodyErrors...)
+	m.Request.Body = m.Body.Value()
+	m.ParseErrors = headerErrors
 }
 
 // buildJobConfig builds a load test job configuration from current input

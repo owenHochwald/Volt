@@ -109,6 +109,6 @@ func NewHeadersTextArea() textarea.Model {
 // NewBodyTextArea creates a pre-configured body textarea
 func NewBodyTextArea() textarea.Model {
 	ta := textarea.New()
-	ta.Placeholder = "key = value,\nname = volt,\nversion=1.0"
+	ta.Placeholder = "{\n  \"name\": \"volt\"\n}"
 	return ta
 }

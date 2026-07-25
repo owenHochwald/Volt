@@ -82,5 +82,5 @@ func (m *RequestPane) reinitRequestPane(request *http.Request) {
 	m.URLInput.SetValue(request.URL)
 	m.NameInput.SetValue(request.Name)
 	m.Headers.SetValue(utils.ParseMapToString(request.Headers))
-	m.Body.SetValue(request.Body[1 : len(request.Body)-1])
+	m.Body.SetValue(request.Body)
 }
