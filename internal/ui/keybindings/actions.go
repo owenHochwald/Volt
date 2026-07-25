@@ -147,7 +147,7 @@ func DefaultRegistry() Registry {
 		{ActionNextPanel, []Context{ContextGlobal}, []string{"alt+l"}, "alt+l", "next panel", 90},
 		{ActionReturnSidebar, []Context{ContextRequest, ContextResponse}, []string{"esc"}, "esc", "return to sidebar", 85},
 
-		{ActionQuit, []Context{ContextSidebar, ContextResponse}, []string{"q"}, "q", "quit", 80},
+		{ActionQuit, []Context{ContextSidebar, ContextRequest, ContextResponse}, []string{"q"}, "q", "quit outside editors", 80},
 		{ActionContextHelp, []Context{ContextSidebar, ContextRequest, ContextResponse}, []string{"?"}, "?", "show context help", 75},
 
 		{ActionLoadRequest, []Context{ContextSidebar}, []string{"enter"}, "enter", "open request", 70},

@@ -44,6 +44,20 @@ func TestQuestionMarkAndQRemainEditableInRequestFields(t *testing.T) {
 	}
 }
 
+func TestQQuitsFromNonEditingRequestControls(t *testing.T) {
+	model := newTestModel(t)
+	model.setFocusedPanel(utils.RequestPanel)
+
+	_, cmd := model.Update(appKeyPress('q', "q", 0))
+
+	if cmd == nil {
+		t.Fatal("q did not quit from the method selector")
+	}
+	if _, ok := cmd().(tea.QuitMsg); !ok {
+		t.Fatalf("q command returned %T, want tea.QuitMsg", cmd())
+	}
+}
+
 func TestF1AlwaysOpensGlobalHelp(t *testing.T) {
 	model := newTestModel(t)
 	model.setFocusedPanel(utils.RequestPanel)

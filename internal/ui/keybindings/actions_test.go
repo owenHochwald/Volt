@@ -16,7 +16,7 @@ func TestDefaultRegistryDefinesCoreActions(t *testing.T) {
 		keys     []string
 	}{
 		{ActionForceQuit, []Context{ContextGlobal}, []string{"ctrl+c"}},
-		{ActionQuit, []Context{ContextSidebar, ContextResponse}, []string{"q"}},
+		{ActionQuit, []Context{ContextSidebar, ContextRequest, ContextResponse}, []string{"q"}},
 		{ActionGlobalHelp, []Context{ContextGlobal}, []string{"f1"}},
 		{ActionContextHelp, []Context{ContextSidebar, ContextRequest, ContextResponse}, []string{"?"}},
 		{ActionPreviousPanel, []Context{ContextGlobal}, []string{"alt+h"}},

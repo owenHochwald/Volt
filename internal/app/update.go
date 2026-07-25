@@ -58,8 +58,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.notification = ui.Notification{Level: ui.NotificationWarning, Text: "Canceling load test…"}
 			return m, nil
 		}
-		if keybindings.Matches(msg, m.keys.Quit) &&
-			(m.focusedPanel == utils.SidebarPanel || m.focusedPanel == utils.ResponsePanel) {
+		if keybindings.Matches(msg, m.keys.Quit) && !isEditing {
 			if m.loadTestCancel != nil {
 				m.loadTestCancel()
 			}
