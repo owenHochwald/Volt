@@ -10,14 +10,18 @@ func Matches(msg tea.KeyPressMsg, binding key.Binding) bool {
 	if !binding.Enabled() {
 		return false
 	}
-	if key.Matches(msg, binding) {
-		return true
-	}
 	keystroke := msg.Keystroke()
 	for _, registered := range binding.Keys() {
 		if keystroke == registered {
 			return true
 		}
 	}
-	return false
+	if msg.Mod.Contains(tea.ModCtrl) ||
+		msg.Mod.Contains(tea.ModAlt) ||
+		msg.Mod.Contains(tea.ModMeta) ||
+		msg.Mod.Contains(tea.ModHyper) ||
+		msg.Mod.Contains(tea.ModSuper) {
+		return false
+	}
+	return key.Matches(msg, binding)
 }
