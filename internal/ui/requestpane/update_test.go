@@ -27,13 +27,14 @@ func TestPlainEnterDoesNotSubmitFromEditableField(t *testing.T) {
 	}
 }
 
-func TestModifiedEnterSubmitsFromAnyRequestField(t *testing.T) {
+func TestRequestSubmissionKeyBindings(t *testing.T) {
 	tests := []struct {
 		name string
-		mod  tea.KeyMod
+		key  tea.KeyPressMsg
 	}{
-		{name: "control", mod: tea.ModCtrl},
-		{name: "alt", mod: tea.ModAlt},
+		{name: "terminal safe control j", key: keyPress('j', "", tea.ModCtrl)},
+		{name: "enhanced control enter alias", key: keyPress(tea.KeyEnter, "", tea.ModCtrl)},
+		{name: "meta enter alias", key: keyPress(tea.KeyEnter, "", tea.ModAlt)},
 	}
 
 	for _, tt := range tests {
@@ -43,15 +44,32 @@ func TestModifiedEnterSubmitsFromAnyRequestField(t *testing.T) {
 			pane.FocusManager.Next()
 			pane.URLInput.SetValue("https://example.com")
 
-			updated, cmd := pane.Update(keyPress(tea.KeyEnter, "", tt.mod))
+			updated, cmd := pane.Update(tt.key)
 
 			if !updated.RequestInProgress {
-				t.Fatal("modified enter did not start a request")
+				t.Fatal("submit binding did not start a request")
 			}
 			if cmd == nil {
-				t.Fatal("modified enter did not produce a submit command")
+				t.Fatal("submit binding did not produce a command")
 			}
 		})
+	}
+}
+
+func TestEnterActivatesFocusedSendButton(t *testing.T) {
+	pane := newTestRequestPane(t)
+	pane.SetFocused(true)
+	pane.URLInput.SetValue("https://example.com")
+	pane.FocusManager.Current().Blur()
+	pane.FocusManager = pane.currentMode.GetFocusManagerWithIndex(&pane, int(FieldSubmitButton))
+
+	updated, cmd := pane.Update(keyPress(tea.KeyEnter, "", 0))
+
+	if !updated.RequestInProgress {
+		t.Fatal("enter on the send button did not start a request")
+	}
+	if cmd == nil {
+		t.Fatal("enter on the send button did not produce a command")
 	}
 }
 
@@ -93,17 +111,45 @@ func TestSetFocusedBlursAndRestoresCurrentControl(t *testing.T) {
 }
 
 func TestTabAndShiftTabOnlyNavigateFields(t *testing.T) {
-	pane := newTestRequestPane(t)
-	pane.SetFocused(true)
-
-	updated, _ := pane.Update(keyPress(tea.KeyTab, "", 0))
-	if got := updated.FocusManager.CurrentIndex(); got != int(FieldURL) {
-		t.Fatalf("tab focus index = %d, want URL field", got)
+	tests := []struct {
+		name  string
+		start FieldIndex
+		key   tea.KeyPressMsg
+		want  FieldIndex
+	}{
+		{
+			name:  "tab advances",
+			start: FieldMethodSelector,
+			key:   keyPress(tea.KeyTab, "", 0),
+			want:  FieldURL,
+		},
+		{
+			name:  "shift tab moves backward",
+			start: FieldURL,
+			key:   keyPress(tea.KeyTab, "", tea.ModShift),
+			want:  FieldMethodSelector,
+		},
+		{
+			name:  "shift tab wraps",
+			start: FieldMethodSelector,
+			key:   keyPress(tea.KeyTab, "", tea.ModShift),
+			want:  FieldSubmitButton,
+		},
 	}
 
-	updated, _ = updated.Update(keyPress(tea.KeyTab, "", tea.ModShift))
-	if got := updated.FocusManager.CurrentIndex(); got != int(FieldMethodSelector) {
-		t.Fatalf("shift+tab focus index = %d, want method selector", got)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pane := newTestRequestPane(t)
+			pane.FocusManager.Current().Blur()
+			pane.FocusManager = pane.currentMode.GetFocusManagerWithIndex(&pane, int(tt.start))
+			pane.SetFocused(true)
+
+			updated, _ := pane.Update(tt.key)
+
+			if got := FieldIndex(updated.FocusManager.CurrentIndex()); got != tt.want {
+				t.Fatalf("focus = %d, want %d", got, tt.want)
+			}
+		})
 	}
 }
 
