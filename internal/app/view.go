@@ -129,11 +129,15 @@ func renderPanel(style lipgloss.Style, focused bool, width, height int, content 
 		style = ui.ApplyFocus(style, true)
 	}
 	contentWidth, contentHeight := contentSize(style, width, height)
-	return style.
+	content = lipgloss.NewStyle().
 		Width(contentWidth).
 		Height(contentHeight).
 		MaxWidth(contentWidth).
 		MaxHeight(contentHeight).
+		Render(content)
+	return style.
+		Width(contentWidth).
+		Height(contentHeight).
 		Render(content)
 }
 

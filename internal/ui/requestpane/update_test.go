@@ -92,6 +92,38 @@ func TestSetFocusedBlursAndRestoresCurrentControl(t *testing.T) {
 	}
 }
 
+func TestTabAndShiftTabOnlyNavigateFields(t *testing.T) {
+	pane := newTestRequestPane(t)
+	pane.SetFocused(true)
+
+	updated, _ := pane.Update(keyPress(tea.KeyTab, "", 0))
+	if got := updated.FocusManager.CurrentIndex(); got != int(FieldURL) {
+		t.Fatalf("tab focus index = %d, want URL field", got)
+	}
+
+	updated, _ = updated.Update(keyPress(tea.KeyTab, "", tea.ModShift))
+	if got := updated.FocusManager.CurrentIndex(); got != int(FieldMethodSelector) {
+		t.Fatalf("shift+tab focus index = %d, want method selector", got)
+	}
+}
+
+func TestArrowKeysDoNotChangeFocusedField(t *testing.T) {
+	pane := newTestRequestPane(t)
+	pane.SetFocused(true)
+	pane.FocusManager.Next()
+	pane.URLInput.SetValue("https://example.com")
+	pane.URLInput.CursorEnd()
+
+	updated, _ := pane.Update(keyPress(tea.KeyLeft, "", 0))
+
+	if got := updated.FocusManager.CurrentIndex(); got != int(FieldURL) {
+		t.Fatalf("left arrow changed focus to index %d", got)
+	}
+	if got, want := updated.URLInput.Position(), len("https://example.com")-1; got != want {
+		t.Fatalf("left arrow cursor position = %d, want %d", got, want)
+	}
+}
+
 func TestInvalidHeadersBlockSubmissionAndSurfaceError(t *testing.T) {
 	pane := newTestRequestPane(t)
 	pane.SetFocused(true)
