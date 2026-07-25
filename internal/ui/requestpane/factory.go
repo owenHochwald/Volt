@@ -24,6 +24,7 @@ func NewConfiguredTextInput(config TextInputConfig) textinput.Model {
 	ti.CharLimit = config.CharLimit
 	ti.SetWidth(config.Width)
 	ti.ShowSuggestions = config.ShowSuggestions
+	ti.SetVirtualCursor(true)
 
 	if config.Value != "" {
 		ti.SetValue(config.Value)
@@ -103,6 +104,7 @@ func NewLoadTestInput(placeholder string, charLimit, width int) textinput.Model 
 func NewHeadersTextArea() textarea.Model {
 	ta := textarea.New()
 	ta.Placeholder = "Content-Type = multipart/form-data,\nAuthorization= Bearer ...,"
+	ta.SetVirtualCursor(true)
 	return ta
 }
 
@@ -110,5 +112,6 @@ func NewHeadersTextArea() textarea.Model {
 func NewBodyTextArea() textarea.Model {
 	ta := textarea.New()
 	ta.Placeholder = "{\n  \"name\": \"volt\"\n}"
+	ta.SetVirtualCursor(true)
 	return ta
 }

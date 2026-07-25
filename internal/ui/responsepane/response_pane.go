@@ -63,13 +63,13 @@ func (m *ResponsePane) ClearLoadTestStats() {
 
 // SetHeight sets the height of the response pane
 func (m *ResponsePane) SetHeight(height int) {
-	m.height = height
+	m.height = max(height, 1)
 	// Viewport needs to be smaller to account for status bar, tabs, etc.
-	m.viewport.SetHeight(height - 5)
+	m.viewport.SetHeight(max(m.height-5, 1))
 }
 
 // SetWidth sets the width of the response pane
 func (m *ResponsePane) SetWidth(width int) {
-	m.width = width
-	m.viewport.SetWidth(width)
+	m.width = max(width, 1)
+	m.viewport.SetWidth(m.width)
 }

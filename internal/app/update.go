@@ -132,21 +132,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
-
-		// Update shortcut pane dimensions (modal sizing)
-		modalWidth := 60
-		modalHeight := 25
-		if m.width < 80 {
-			modalWidth = m.width - 10
-		}
-		if m.height < 30 {
-			modalHeight = m.height - 5
-		}
-		m.shortcutPane.SetWidth(modalWidth)
-		m.shortcutPane.SetHeight(modalHeight)
-
-		// Existing size handling for other panels
-		m.sidebarPane.SetSize(m.width/2, (m.height-15)/2)
+		m.applyLayout(calculateLayout(m.width, m.height))
 	}
 
 	// Existing panel update routing (only when help modal is closed)

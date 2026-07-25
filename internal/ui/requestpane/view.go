@@ -99,14 +99,8 @@ func (m RequestPane) View() string {
 		helpText = ui.HelpStyle.Render("ctrl+l: load test mode • tab/↑/↓: navigate • ←/→ or h/l: change method • ctrl+p: send • enter/→: accept URL • ctrl+s: save")
 	}
 
-	var spacing string
-	if m.LoadTestMode {
-		spacing = lipgloss.NewStyle().Height(m.Height - 18).Render("")
-
-	} else {
-		spacing = lipgloss.NewStyle().Height(m.Height - 10).Render("")
-
-	}
+	usedHeight := lipgloss.Height(mainContent) + lipgloss.Height(stopwatchCount) + lipgloss.Height(helpText)
+	spacing := lipgloss.NewStyle().Height(max(m.Height-usedHeight, 0)).Render("")
 
 	finalContent := lipgloss.JoinVertical(
 		lipgloss.Left,

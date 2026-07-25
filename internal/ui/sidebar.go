@@ -145,7 +145,6 @@ func (s *SidebarPane) View() string {
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		s.requestsList.View(),
-		lipgloss.NewStyle().Height(s.height-1).Render(""),
 		helpText,
 	)
 }
@@ -160,9 +159,9 @@ func (s *SidebarPane) SelectedItem() (RequestItem, bool) {
 }
 
 func (s *SidebarPane) SetSize(width, height int) {
-	s.width = width
-	s.height = height
-	s.requestsList.SetSize(width, height)
+	s.width = max(width, 1)
+	s.height = max(height, 1)
+	s.requestsList.SetSize(s.width, max(s.height-2, 1))
 }
 
 func NewSidebar(db *storage.SQLiteStorage, keys keybindings.KeyMap) *SidebarPane {
