@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"charm.land/bubbles/v2/key"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/owenHochwald/Volt/internal/ui/keybindings"
 )
 
@@ -18,5 +19,17 @@ func TestHelpTabLabelsFollowConfiguredBinding(t *testing.T) {
 		if !strings.Contains(rendered, expected) {
 			t.Errorf("help tab bar does not contain %q: %s", expected, rendered)
 		}
+	}
+}
+
+func TestHelpDoesNotWrapLongRegistryKeys(t *testing.T) {
+	pane := SetupShortcutPane(keybindings.DefaultKeyMap())
+	pane.SetWidth(72)
+	pane.SetHeight(30)
+	pane.SetContext(keybindings.ContextRequest)
+
+	rendered := ansi.Strip(pane.View())
+	if !strings.Contains(rendered, "ctrl+enter/alt+enter") {
+		t.Fatalf("long submit binding wrapped unexpectedly:\n%s", rendered)
 	}
 }
