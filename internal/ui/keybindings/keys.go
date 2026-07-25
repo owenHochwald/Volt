@@ -14,7 +14,6 @@ type KeyMap struct {
 	ContextHelp   key.Binding
 	PreviousPanel key.Binding
 	NextPanel     key.Binding
-	EscapePanel   key.Binding
 
 	// Sidebar
 	LoadRequest   key.Binding
@@ -62,7 +61,6 @@ func DefaultKeyMap() KeyMap {
 		ContextHelp:      registry.MustBinding(ActionContextHelp),
 		PreviousPanel:    registry.MustBinding(ActionPreviousPanel),
 		NextPanel:        registry.MustBinding(ActionNextPanel),
-		EscapePanel:      registry.MustBinding(ActionReturnSidebar),
 		LoadRequest:      registry.MustBinding(ActionLoadRequest),
 		DeleteRequest:    registry.MustBinding(ActionDeleteRequest),
 		NavUp:            registry.MustBinding(ActionNavigateUp),

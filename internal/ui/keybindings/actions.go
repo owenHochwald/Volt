@@ -28,7 +28,6 @@ const (
 	ActionContextHelp     ActionID = "context_help"
 	ActionPreviousPanel   ActionID = "previous_panel"
 	ActionNextPanel       ActionID = "next_panel"
-	ActionReturnSidebar   ActionID = "return_sidebar"
 	ActionLoadRequest     ActionID = "load_request"
 	ActionDeleteRequest   ActionID = "delete_request"
 	ActionNavigateUp      ActionID = "navigate_up"
@@ -142,12 +141,11 @@ func (r Registry) ActionsDeclaredFor(context Context) []Action {
 func DefaultRegistry() Registry {
 	return NewRegistry([]Action{
 		{ActionForceQuit, []Context{ContextGlobal}, []string{"ctrl+c"}, "ctrl+c", "quit immediately", 100},
+		{ActionQuit, []Context{ContextGlobal}, []string{"esc"}, "esc esc", "back / quit", 98},
 		{ActionGlobalHelp, []Context{ContextGlobal}, []string{"f1"}, "f1", "show all shortcuts", 95},
 		{ActionPreviousPanel, []Context{ContextGlobal}, []string{"alt+h"}, "alt+h", "previous panel", 90},
 		{ActionNextPanel, []Context{ContextGlobal}, []string{"alt+l"}, "alt+l", "next panel", 90},
-		{ActionReturnSidebar, []Context{ContextRequest, ContextResponse}, []string{"esc"}, "esc", "return to sidebar", 85},
 
-		{ActionQuit, []Context{ContextSidebar, ContextRequest, ContextResponse}, []string{"q"}, "q", "quit outside editors", 80},
 		{ActionContextHelp, []Context{ContextSidebar, ContextRequest, ContextResponse}, []string{"?"}, "?", "show context help", 75},
 
 		{ActionLoadRequest, []Context{ContextSidebar}, []string{"enter"}, "enter", "open request", 70},
@@ -175,7 +173,7 @@ func DefaultRegistry() Registry {
 		{ActionPageUp, []Context{ContextResponse}, []string{"ctrl+u"}, "ctrl+u", "half page up", 50},
 		{ActionPageDown, []Context{ContextResponse}, []string{"ctrl+d"}, "ctrl+d", "half page down", 50},
 
-		{ActionCloseHelp, []Context{ContextHelp}, []string{"q", "?", "esc"}, "q/?/esc", "close help", 80},
+		{ActionCloseHelp, []Context{ContextHelp}, []string{"q", "?"}, "q/?", "close help", 80},
 		{ActionPreviousHelpTab, []Context{ContextHelp}, []string{"h"}, "h", "previous section", 70},
 		{ActionNextHelpTab, []Context{ContextHelp}, []string{"l"}, "l", "next section", 70},
 		{ActionDirectHelpTab, []Context{ContextHelp}, []string{"1", "2", "3", "4"}, "1-4", "jump to section", 60},

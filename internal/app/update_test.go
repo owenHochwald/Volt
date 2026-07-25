@@ -100,6 +100,34 @@ func TestNonEscapeBreaksQuitSequence(t *testing.T) {
 	}
 }
 
+func TestEscapeQuitSequenceExpires(t *testing.T) {
+	model := newTestModel(t)
+
+	updated, _ := model.Update(appKeyPress(tea.KeyEscape, "", 0))
+	armed := updated.(Model)
+	updated, _ = armed.Update(quitSequenceExpiredMsg{sequence: armed.quitSequence})
+	_, cmd := updated.(Model).Update(appKeyPress(tea.KeyEscape, "", 0))
+
+	if commandQuits(cmd) {
+		t.Fatal("escape quit after the quit sequence expired")
+	}
+}
+
+func TestFirstEscapeClosesHelpWithoutQuitting(t *testing.T) {
+	model := newTestModel(t)
+	model.openHelp(keybindings.ContextGlobal)
+
+	updated, cmd := model.Update(appKeyPress(tea.KeyEscape, "", 0))
+	got := updated.(Model)
+
+	if commandQuits(cmd) {
+		t.Fatal("first escape quit from help")
+	}
+	if got.showHelpModal {
+		t.Fatal("first escape did not close help")
+	}
+}
+
 func TestControlCAlwaysQuits(t *testing.T) {
 	model := newTestModel(t)
 	model.setFocusedPanel(utils.RequestPanel)

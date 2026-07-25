@@ -35,6 +35,8 @@ type Model struct {
 	loadTestCanceled bool
 	showHelpModal    bool
 	notification     ui.Notification
+	quitArmed        bool
+	quitSequence     uint64
 }
 
 func SetupModel(db *storage.SQLiteStorage) Model {

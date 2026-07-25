@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/owenHochwald/Volt/internal/http"
@@ -12,6 +13,15 @@ import (
 	"github.com/owenHochwald/Volt/internal/ui/shortcutpane"
 	"github.com/owenHochwald/Volt/internal/utils"
 )
+
+const (
+	quitSequenceTimeout = 750 * time.Millisecond
+	quitWarningText     = "Press Esc again to quit"
+)
+
+type quitSequenceExpiredMsg struct {
+	sequence uint64
+}
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
@@ -24,6 +34,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, tea.Quit
 		}
+
+		if keybindings.Matches(msg, m.keys.Quit) {
+			if m.quitArmed {
+				if m.loadTestCancel != nil {
+					m.loadTestCancel()
+				}
+				return m, tea.Quit
+			}
+
+			if m.showHelpModal {
+				m.closeHelp()
+			} else if m.focusedPanel != utils.SidebarPanel {
+				m.setFocusedPanel(utils.SidebarPanel)
+			}
+			return m, m.armQuit()
+		}
+		m.disarmQuit()
 
 		if m.showHelpModal {
 			if keybindings.Matches(msg, m.keys.GlobalHelp) {
@@ -58,18 +85,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.notification = ui.Notification{Level: ui.NotificationWarning, Text: "Canceling load test…"}
 			return m, nil
 		}
-		if keybindings.Matches(msg, m.keys.Quit) && !isEditing {
-			if m.loadTestCancel != nil {
-				m.loadTestCancel()
-			}
-			return m, tea.Quit
-		}
-		if keybindings.Matches(msg, m.keys.EscapePanel) {
-			if m.focusedPanel != utils.SidebarPanel {
-				m.setFocusedPanel(utils.SidebarPanel)
-				return m, nil
-			}
-		}
 		if keybindings.Matches(msg, m.keys.LoadRequest) {
 			if m.focusedPanel == utils.SidebarPanel {
 				if item, ok := m.sidebarPane.SelectedItem(); ok {
@@ -80,6 +95,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case shortcutpane.CloseHelpModalMsg:
 		m.closeHelp()
+		return m, nil
+
+	case quitSequenceExpiredMsg:
+		if m.quitArmed && msg.sequence == m.quitSequence {
+			m.disarmQuit()
+		}
 		return m, nil
 
 	case http.ResultMsg:
@@ -227,4 +248,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, cmd
+}
+
+func (m *Model) armQuit() tea.Cmd {
+	m.quitSequence++
+	m.quitArmed = true
+	m.notification = ui.Notification{Level: ui.NotificationWarning, Text: quitWarningText}
+	sequence := m.quitSequence
+	return tea.Tick(quitSequenceTimeout, func(time.Time) tea.Msg {
+		return quitSequenceExpiredMsg{sequence: sequence}
+	})
+}
+
+func (m *Model) disarmQuit() {
+	if !m.quitArmed {
+		return
+	}
+	m.quitArmed = false
+	m.quitSequence++
+	if m.notification.Text == quitWarningText {
+		m.notification = ui.Notification{}
+	}
 }

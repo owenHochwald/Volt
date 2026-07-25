@@ -35,6 +35,7 @@ type SidebarPane struct {
 func (s *SidebarPane) SetRequests(items []list.Item) {
 	s.requestsList = list.New(items, list.NewDefaultDelegate(), s.width, s.height)
 	s.requestsList.SetShowHelp(false)
+	s.requestsList.DisableQuitKeybindings()
 }
 
 func (s *SidebarPane) Init() tea.Cmd {
@@ -176,6 +177,7 @@ func NewSidebar(db *storage.SQLiteStorage, keys keybindings.KeyMap) *SidebarPane
 	}
 	sidebar.requestsList.Title = "Saved (Loading...)"
 	sidebar.requestsList.SetShowHelp(false)
+	sidebar.requestsList.DisableQuitKeybindings()
 
 	return sidebar
 }
