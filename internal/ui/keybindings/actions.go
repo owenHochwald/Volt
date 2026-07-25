@@ -155,7 +155,7 @@ func DefaultRegistry() Registry {
 		{ActionNavigateUp, []Context{ContextSidebar}, []string{"k"}, "k", "move up", 60},
 		{ActionNavigateDown, []Context{ContextSidebar}, []string{"j"}, "j", "move down", 60},
 		{ActionNavigateFirst, []Context{ContextSidebar}, []string{"g"}, "g", "first request", 55},
-		{ActionNavigateLast, []Context{ContextSidebar}, []string{"shift+g"}, "G", "last request", 55},
+		{ActionNavigateLast, []Context{ContextSidebar}, []string{"G"}, "G", "last request", 55},
 
 		{ActionSubmit, []Context{ContextRequest}, []string{"ctrl+enter", "alt+enter"}, "ctrl+enter/alt+enter", "send request", 70},
 		{ActionSaveRequest, []Context{ContextRequest}, []string{"ctrl+s"}, "ctrl+s", "save request", 65},

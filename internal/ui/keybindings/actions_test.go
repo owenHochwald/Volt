@@ -3,6 +3,8 @@ package keybindings
 import (
 	"slices"
 	"testing"
+
+	"charm.land/bubbles/v2/key"
 )
 
 func TestDefaultRegistryDefinesCoreActions(t *testing.T) {
@@ -47,6 +49,72 @@ func TestDefaultRegistryDefinesCoreActions(t *testing.T) {
 				t.Fatalf("priority = %d, want positive value", action.Priority)
 			}
 		})
+	}
+}
+
+type keyString string
+
+func (k keyString) String() string {
+	return string(k)
+}
+
+func TestEveryRegisteredKeyMatchesItsBinding(t *testing.T) {
+	t.Parallel()
+
+	for _, action := range DefaultRegistry().Actions() {
+		action := action
+		t.Run(string(action.ID), func(t *testing.T) {
+			t.Parallel()
+			binding := action.Binding()
+			for _, registeredKey := range action.Keys {
+				if !key.Matches(keyString(registeredKey), binding) {
+					t.Errorf("registered key %q does not match its generated binding", registeredKey)
+				}
+			}
+		})
+	}
+}
+
+func TestEveryActionAppearsOnlyInItsDeclaredContexts(t *testing.T) {
+	t.Parallel()
+
+	registry := DefaultRegistry()
+	contexts := []Context{
+		ContextSidebar,
+		ContextRequest,
+		ContextResponse,
+		ContextHelp,
+	}
+	for _, action := range registry.Actions() {
+		for _, context := range contexts {
+			got := slices.ContainsFunc(registry.ActionsFor(context), func(candidate Action) bool {
+				return candidate.ID == action.ID
+			})
+			want := slices.Contains(action.Contexts, ContextGlobal) || slices.Contains(action.Contexts, context)
+			if got != want {
+				t.Errorf("%s in %s = %t, want %t", action.ID, context, got, want)
+			}
+		}
+	}
+}
+
+func TestHelpGroupsAreGeneratedFromDeclaredRegistryActions(t *testing.T) {
+	t.Parallel()
+
+	keyMap := DefaultKeyMap()
+	for _, group := range keyMap.GetKeyGroups() {
+		actions := keyMap.Registry.ActionsDeclaredFor(group.Context)
+		if len(group.Bindings) != len(actions) {
+			t.Fatalf("%s help bindings = %d, registry actions = %d", group.Context, len(group.Bindings), len(actions))
+		}
+		for i, action := range actions {
+			if !slices.Equal(group.Bindings[i].Keys(), action.Keys) {
+				t.Errorf("%s help keys = %v, registry keys = %v", action.ID, group.Bindings[i].Keys(), action.Keys)
+			}
+			if help := group.Bindings[i].Help(); help.Key != action.KeyHelp || help.Desc != action.Description {
+				t.Errorf("%s help = %+v, want %q %q", action.ID, help, action.KeyHelp, action.Description)
+			}
+		}
 	}
 }
 
