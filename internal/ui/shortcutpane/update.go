@@ -12,15 +12,17 @@ func (m ShortcutPane) Update(msg tea.Msg) (ShortcutPane, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		// Direct tab access - check for numbers
-		switch msg.String() {
-		case "1":
-			m.activeTab = int(Global)
-		case "2":
-			m.activeTab = int(Sidebar)
-		case "3":
-			m.activeTab = int(Request)
-		case "4":
-			m.activeTab = int(Response)
+		if keybindings.Matches(msg, m.keys.DirectHelpTab) {
+			switch msg.String() {
+			case "1":
+				m.activeTab = int(Global)
+			case "2":
+				m.activeTab = int(Sidebar)
+			case "3":
+				m.activeTab = int(Request)
+			case "4":
+				m.activeTab = int(Response)
+			}
 		}
 
 		// Tab navigation

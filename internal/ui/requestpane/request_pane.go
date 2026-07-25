@@ -83,11 +83,34 @@ func (m RequestPane) Init() tea.Cmd {
 // SetFocused sets the panel focus state
 func (m *RequestPane) SetFocused(focused bool) {
 	m.PanelFocused = focused
+	if m.FocusManager == nil {
+		return
+	}
+	if focused {
+		m.FocusManager.Current().Focus()
+		return
+	}
+	m.FocusManager.Current().Blur()
 }
 
 // SetHeight sets the height of the request pane
 func (m *RequestPane) SetHeight(height int) {
 	m.Height = height
+}
+
+// IsEditing reports whether the focused control accepts printable text.
+func (m RequestPane) IsEditing() bool {
+	if m.FocusManager == nil {
+		return false
+	}
+	index := FieldIndex(m.FocusManager.CurrentIndex())
+	if index == FieldMethodSelector {
+		return false
+	}
+	if m.LoadTestMode {
+		return index != FieldLTSubmit
+	}
+	return index != FieldSubmitButton
 }
 
 // GetCurrentMethod returns the currently selected HTTP method

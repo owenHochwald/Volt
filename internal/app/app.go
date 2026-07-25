@@ -48,6 +48,7 @@ func SetupModel(db *storage.SQLiteStorage) Model {
 		headerPane:    ui.SetupHeader(),
 		showHelpModal: false,
 	}
+	m.setFocusedPanel(utils.SidebarPanel)
 	return m
 }
 

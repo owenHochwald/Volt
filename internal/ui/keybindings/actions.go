@@ -122,6 +122,22 @@ func (r Registry) ActionsFor(context Context) []Action {
 	return actions
 }
 
+// ActionsDeclaredFor returns actions assigned directly to a context without
+// implicitly adding global actions. It is used to build non-duplicated help
+// sections.
+func (r Registry) ActionsDeclaredFor(context Context) []Action {
+	actions := make([]Action, 0, len(r.actions))
+	for _, action := range r.actions {
+		if slices.Contains(action.Contexts, context) {
+			actions = append(actions, action)
+		}
+	}
+	sort.SliceStable(actions, func(i, j int) bool {
+		return actions[i].Priority > actions[j].Priority
+	})
+	return actions
+}
+
 func DefaultRegistry() Registry {
 	return NewRegistry([]Action{
 		{ActionForceQuit, []Context{ContextGlobal}, []string{"ctrl+c"}, "ctrl+c", "quit immediately", 100},

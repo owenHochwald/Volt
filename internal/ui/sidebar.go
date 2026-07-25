@@ -42,6 +42,10 @@ func (s *SidebarPane) Init() tea.Cmd {
 	return LoadRequestsCmd(s.db)
 }
 
+func (s *SidebarPane) SetFocused(focused bool) {
+	s.panelFocused = focused
+}
+
 func (s *SidebarPane) Update(msg tea.Msg) (*SidebarPane, tea.Cmd) {
 	var cmd tea.Cmd
 
@@ -94,6 +98,9 @@ func (s *SidebarPane) Update(msg tea.Msg) (*SidebarPane, tea.Cmd) {
 
 		// Navigation override - wrapped to cycle
 		if keybindings.Matches(msg, s.keys.NavUp) {
+			if len(s.requestsList.Items()) == 0 {
+				return s, nil
+			}
 			currentIndex := s.requestsList.Index()
 			if currentIndex == 0 {
 				s.requestsList.Select(len(s.requestsList.Items()) - 1)
@@ -103,12 +110,25 @@ func (s *SidebarPane) Update(msg tea.Msg) (*SidebarPane, tea.Cmd) {
 			return s, nil
 		}
 		if keybindings.Matches(msg, s.keys.NavDown) {
+			if len(s.requestsList.Items()) == 0 {
+				return s, nil
+			}
 			currentIndex := s.requestsList.Index()
 			itemCount := len(s.requestsList.Items()) - 1
 			if currentIndex == itemCount {
 				s.requestsList.Select(0)
 			} else {
 				s.requestsList.Select(currentIndex + 1)
+			}
+			return s, nil
+		}
+		if keybindings.Matches(msg, s.keys.NavFirst) {
+			s.requestsList.Select(0)
+			return s, nil
+		}
+		if keybindings.Matches(msg, s.keys.NavLast) {
+			if itemCount := len(s.requestsList.Items()); itemCount > 0 {
+				s.requestsList.Select(itemCount - 1)
 			}
 			return s, nil
 		}

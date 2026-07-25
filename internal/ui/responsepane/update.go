@@ -48,6 +48,14 @@ func (m *ResponsePane) Update(msg tea.Msg) (*ResponsePane, tea.Cmd) {
 				return m, m.copyToClipboard(m.Response.Body)
 			}
 		}
+		if keybindings.Matches(msg, m.keys.PageUp) {
+			m.viewport.HalfPageUp()
+			return m, nil
+		}
+		if keybindings.Matches(msg, m.keys.PageDown) {
+			m.viewport.HalfPageDown()
+			return m, nil
+		}
 	}
 
 	m.viewport, cmd = m.viewport.Update(msg)

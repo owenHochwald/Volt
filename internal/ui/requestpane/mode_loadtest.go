@@ -75,7 +75,7 @@ func (ltm *LoadTestMode) HandleInput(m *RequestPane, msg tea.KeyPressMsg) (*Requ
 
 // handleSubmit handles the submit button in load test mode
 func (ltm *LoadTestMode) handleSubmit(m *RequestPane, msg tea.KeyPressMsg) (*RequestPane, tea.Cmd) {
-	if msg.String() == "enter" || keybindings.Matches(msg, m.keys.SendRequest) {
+	if keybindings.Matches(msg, m.keys.SendRequest) {
 		if m.RequestInProgress {
 			return m, nil
 		}

@@ -30,3 +30,19 @@ func (m *ShortcutPane) SetHeight(height int) {
 func (m *ShortcutPane) SetWidth(width int) {
 	m.width = width
 }
+
+func (m *ShortcutPane) SetContext(context keybindings.Context) {
+	for i, tab := range m.tabs {
+		if tab.Context == context {
+			m.activeTab = i
+			return
+		}
+	}
+}
+
+func (m ShortcutPane) ActiveContext() keybindings.Context {
+	if m.activeTab < 0 || m.activeTab >= len(m.tabs) {
+		return ""
+	}
+	return m.tabs[m.activeTab].Context
+}

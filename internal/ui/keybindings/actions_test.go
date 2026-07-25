@@ -115,3 +115,33 @@ func TestActionsForContextIncludesGlobalsAndSortsByPriority(t *testing.T) {
 		t.Fatal("request actions must include globally available help")
 	}
 }
+
+func TestDefaultKeyMapIsGeneratedFromRegistry(t *testing.T) {
+	t.Parallel()
+
+	keyMap := DefaultKeyMap()
+	tests := []struct {
+		id      ActionID
+		binding []string
+	}{
+		{ActionForceQuit, keyMap.ForceQuit.Keys()},
+		{ActionQuit, keyMap.Quit.Keys()},
+		{ActionGlobalHelp, keyMap.GlobalHelp.Keys()},
+		{ActionContextHelp, keyMap.ContextHelp.Keys()},
+		{ActionPreviousPanel, keyMap.PreviousPanel.Keys()},
+		{ActionNextPanel, keyMap.NextPanel.Keys()},
+		{ActionPreviousField, keyMap.PrevField.Keys()},
+		{ActionNextField, keyMap.NextField.Keys()},
+		{ActionSubmit, keyMap.SendRequest.Keys()},
+	}
+
+	for _, tt := range tests {
+		action, ok := keyMap.Registry.Action(tt.id)
+		if !ok {
+			t.Fatalf("key map registry is missing %s", tt.id)
+		}
+		if !slices.Equal(tt.binding, action.Keys) {
+			t.Errorf("%s binding = %v, registry keys = %v", tt.id, tt.binding, action.Keys)
+		}
+	}
+}
