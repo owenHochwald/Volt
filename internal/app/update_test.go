@@ -201,16 +201,26 @@ func TestPanelNavigationKeySequences(t *testing.T) {
 			want: utils.ResponsePanel,
 		},
 		{
-			name:  "alt next panel remains an alias",
+			name:  "mac option next panel with associated text",
 			start: utils.SidebarPanel,
-			keys:  []tea.KeyPressMsg{appKeyPress('l', "", tea.ModAlt)},
-			want:  utils.RequestPanel,
+			keys: []tea.KeyPressMsg{tea.KeyPressMsg(tea.Key{
+				Code:     'l',
+				BaseCode: 'l',
+				Text:     "¬",
+				Mod:      tea.ModAlt,
+			})},
+			want: utils.RequestPanel,
 		},
 		{
-			name:  "alt previous panel remains an alias",
+			name:  "mac option previous panel with associated text",
 			start: utils.SidebarPanel,
-			keys:  []tea.KeyPressMsg{appKeyPress('h', "", tea.ModAlt)},
-			want:  utils.ResponsePanel,
+			keys: []tea.KeyPressMsg{tea.KeyPressMsg(tea.Key{
+				Code:     'h',
+				BaseCode: 'h',
+				Text:     "˙",
+				Mod:      tea.ModAlt,
+			})},
+			want: utils.ResponsePanel,
 		},
 	}
 
