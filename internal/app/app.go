@@ -4,6 +4,7 @@ import (
 	"context"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/owenHochwald/Volt/internal/buildinfo"
 	"github.com/owenHochwald/Volt/internal/http"
 	"github.com/owenHochwald/Volt/internal/storage"
 	"github.com/owenHochwald/Volt/internal/ui"
@@ -55,7 +56,7 @@ func SetupModel(db *storage.SQLiteStorage) Model {
 		responsePane:  &responsePane,
 		shortcutPane:  shortcutPane,
 		focusedPanel:  utils.SidebarPanel,
-		headerPane:    ui.SetupHeader(),
+		headerPane:    ui.SetupHeader(buildinfo.Version()),
 		showHelpModal: false,
 		width:         80,
 		height:        24,
