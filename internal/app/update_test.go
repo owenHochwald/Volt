@@ -44,17 +44,71 @@ func TestQuestionMarkAndQRemainEditableInRequestFields(t *testing.T) {
 	}
 }
 
-func TestQQuitsFromNonEditingRequestControls(t *testing.T) {
+func TestQNeverQuits(t *testing.T) {
+	tests := []struct {
+		name  string
+		panel utils.Panel
+	}{
+		{name: "sidebar", panel: utils.SidebarPanel},
+		{name: "request controls", panel: utils.RequestPanel},
+		{name: "response", panel: utils.ResponsePanel},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			model := newTestModel(t)
+			model.setFocusedPanel(tt.panel)
+
+			_, cmd := model.Update(appKeyPress('q', "q", 0))
+
+			if commandQuits(cmd) {
+				t.Fatal("q quit Volt")
+			}
+		})
+	}
+}
+
+func TestDoubleEscapeQuits(t *testing.T) {
+	model := newTestModel(t)
+	model.setFocusedPanel(utils.ResponsePanel)
+
+	updated, firstCmd := model.Update(appKeyPress(tea.KeyEscape, "", 0))
+	afterFirst := updated.(Model)
+
+	if commandQuits(firstCmd) {
+		t.Fatal("first escape quit Volt")
+	}
+	if afterFirst.focusedPanel != utils.SidebarPanel {
+		t.Fatalf("first escape left panel = %d, want sidebar", afterFirst.focusedPanel)
+	}
+
+	_, secondCmd := afterFirst.Update(appKeyPress(tea.KeyEscape, "", 0))
+	if !commandQuits(secondCmd) {
+		t.Fatal("second consecutive escape did not quit Volt")
+	}
+}
+
+func TestNonEscapeBreaksQuitSequence(t *testing.T) {
+	model := newTestModel(t)
+
+	updated, _ := model.Update(appKeyPress(tea.KeyEscape, "", 0))
+	updated, _ = updated.(Model).Update(appKeyPress('q', "q", 0))
+	_, cmd := updated.(Model).Update(appKeyPress(tea.KeyEscape, "", 0))
+
+	if commandQuits(cmd) {
+		t.Fatal("escape quit after an intervening key")
+	}
+}
+
+func TestControlCAlwaysQuits(t *testing.T) {
 	model := newTestModel(t)
 	model.setFocusedPanel(utils.RequestPanel)
+	model.requestPane.FocusManager.Next()
 
-	_, cmd := model.Update(appKeyPress('q', "q", 0))
+	_, cmd := model.Update(appKeyPress('c', "", tea.ModCtrl))
 
-	if cmd == nil {
-		t.Fatal("q did not quit from the method selector")
-	}
-	if _, ok := cmd().(tea.QuitMsg); !ok {
-		t.Fatalf("q command returned %T, want tea.QuitMsg", cmd())
+	if !commandQuits(cmd) {
+		t.Fatal("ctrl+c did not quit while editing")
 	}
 }
 
@@ -114,4 +168,21 @@ func appKeyPress(code rune, text string, mod tea.KeyMod) tea.KeyPressMsg {
 		Text: text,
 		Mod:  mod,
 	})
+}
+
+func commandQuits(cmd tea.Cmd) bool {
+	if cmd == nil {
+		return false
+	}
+	switch msg := cmd().(type) {
+	case tea.QuitMsg:
+		return true
+	case tea.BatchMsg:
+		for _, batched := range msg {
+			if commandQuits(batched) {
+				return true
+			}
+		}
+	}
+	return false
 }
