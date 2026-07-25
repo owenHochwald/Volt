@@ -15,11 +15,17 @@ import (
 )
 
 const (
-	quitSequenceTimeout = 750 * time.Millisecond
-	quitWarningText     = "Press Esc again to quit"
+	quitSequenceTimeout       = 750 * time.Millisecond
+	quitWarningText           = "Press Esc again to quit"
+	panelNavigationTimeout    = 1500 * time.Millisecond
+	panelNavigationPromptText = "Panel navigation: press h or l"
 )
 
 type quitSequenceExpiredMsg struct {
+	sequence uint64
+}
+
+type panelNavigationExpiredMsg struct {
 	sequence uint64
 }
 
@@ -36,6 +42,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if keybindings.Matches(msg, m.keys.Quit) {
+			m.disarmPanelNavigation()
 			if m.quitArmed {
 				if m.loadTestCancel != nil {
 					m.loadTestCancel()
@@ -52,6 +59,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.disarmQuit()
 
+		if m.panelNavigationArmed {
+			switch msg.Keystroke() {
+			case "h":
+				m.disarmPanelNavigation()
+				m.movePanel(-1)
+				return m, nil
+			case "l":
+				m.disarmPanelNavigation()
+				m.movePanel(1)
+				return m, nil
+			default:
+				m.disarmPanelNavigation()
+			}
+		}
+
 		if m.showHelpModal {
 			if keybindings.Matches(msg, m.keys.GlobalHelp) {
 				m.closeHelp()
@@ -67,6 +89,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		isEditing := m.focusedPanel == utils.RequestPanel && m.requestPane.IsEditing()
+		if keybindings.Matches(msg, m.keys.PanelCommand) && !isEditing {
+			return m, m.armPanelNavigation()
+		}
 		if keybindings.Matches(msg, m.keys.ContextHelp) && !isEditing {
 			m.openHelp(m.focusedContext())
 			return m, nil
@@ -100,6 +125,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case quitSequenceExpiredMsg:
 		if m.quitArmed && msg.sequence == m.quitSequence {
 			m.disarmQuit()
+		}
+		return m, nil
+
+	case panelNavigationExpiredMsg:
+		if m.panelNavigationArmed && msg.sequence == m.panelNavigationSequence {
+			m.disarmPanelNavigation()
 		}
 		return m, nil
 
@@ -267,6 +298,27 @@ func (m *Model) disarmQuit() {
 	m.quitArmed = false
 	m.quitSequence++
 	if m.notification.Text == quitWarningText {
+		m.notification = ui.Notification{}
+	}
+}
+
+func (m *Model) armPanelNavigation() tea.Cmd {
+	m.panelNavigationSequence++
+	m.panelNavigationArmed = true
+	m.notification = ui.Notification{Level: ui.NotificationInfo, Text: panelNavigationPromptText}
+	sequence := m.panelNavigationSequence
+	return tea.Tick(panelNavigationTimeout, func(time.Time) tea.Msg {
+		return panelNavigationExpiredMsg{sequence: sequence}
+	})
+}
+
+func (m *Model) disarmPanelNavigation() {
+	if !m.panelNavigationArmed {
+		return
+	}
+	m.panelNavigationArmed = false
+	m.panelNavigationSequence++
+	if m.notification.Text == panelNavigationPromptText {
 		m.notification = ui.Notification{}
 	}
 }
