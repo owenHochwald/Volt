@@ -68,6 +68,44 @@ func TestJobConfigCountModeHasExactAccountingAndTransferStats(t *testing.T) {
 	assert.GreaterOrEqual(t, stats.MaxDuration, stats.MinDuration)
 }
 
+func TestJobConfigWithNoPositiveExecutionBoundFinishesWithoutWork(t *testing.T) {
+	tests := map[string]JobConfig{
+		"zero bounds":     {Concurrency: 4},
+		"negative bounds": {Concurrency: 4, Duration: -time.Second, TotalRequests: -1},
+	}
+	for name, config := range tests {
+		t.Run(name, func(t *testing.T) {
+			updates := make(chan *LoadTestStats, 1)
+			done := make(chan struct{})
+			go func() {
+				config.Run(context.Background(), updates)
+				close(done)
+			}()
+
+			select {
+			case stats, ok := <-updates:
+				require.True(t, ok)
+				require.NotNil(t, stats)
+				assert.Zero(t, stats.TotalRequests)
+				assert.Zero(t, stats.CompletedRequests)
+				assert.Zero(t, stats.FailedRequests)
+				assert.Zero(t, stats.MinDuration)
+				assert.False(t, stats.EndTime.IsZero())
+			case <-time.After(time.Second):
+				t.Fatal("zero-work job did not terminate")
+			}
+
+			select {
+			case <-done:
+			case <-time.After(time.Second):
+				t.Fatal("zero-work job did not return")
+			}
+			_, ok := <-updates
+			assert.False(t, ok, "updates channel should be closed")
+		})
+	}
+}
+
 func TestJobConfigDurationModeRunsForConfiguredDuration(t *testing.T) {
 	server := httptest.NewServer(stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
 		time.Sleep(2 * time.Millisecond)

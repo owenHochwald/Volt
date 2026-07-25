@@ -158,7 +158,7 @@ type runState struct {
 	limiter *globalRateLimiter
 }
 
-// globalRateLimiter assigns request start times from one process-wide schedule
+// globalRateLimiter assigns request start times from one run-wide schedule
 // shared by every worker. It deliberately allows an initial request
 // immediately, followed by evenly spaced starts (burst size one).
 type globalRateLimiter struct {
@@ -228,6 +228,17 @@ func (s *JobConfig) Run(ctx context.Context, updates chan<- *LoadTestStats) {
 	}
 
 	start := time.Now()
+	if s.Duration <= 0 && s.TotalRequests <= 0 {
+		stats := NewLoadTestStats(0)
+		stats.StartTime = start
+		stats.EndTime = time.Now()
+		stats.MinDuration = 0
+		snapshot := stats.GetSnapshot()
+		updates <- &snapshot
+		close(updates)
+		return
+	}
+
 	runCtx := ctx
 	cancel := func() {}
 	if s.Duration > 0 {
