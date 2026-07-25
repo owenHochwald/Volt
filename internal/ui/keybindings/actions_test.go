@@ -1,0 +1,117 @@
+package keybindings
+
+import (
+	"slices"
+	"testing"
+)
+
+func TestDefaultRegistryDefinesCoreActions(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		id       ActionID
+		contexts []Context
+		keys     []string
+	}{
+		{ActionForceQuit, []Context{ContextGlobal}, []string{"ctrl+c"}},
+		{ActionQuit, []Context{ContextSidebar, ContextResponse}, []string{"q"}},
+		{ActionGlobalHelp, []Context{ContextGlobal}, []string{"f1"}},
+		{ActionContextHelp, []Context{ContextSidebar, ContextRequest, ContextResponse}, []string{"?"}},
+		{ActionPreviousPanel, []Context{ContextGlobal}, []string{"alt+h"}},
+		{ActionNextPanel, []Context{ContextGlobal}, []string{"alt+l"}},
+		{ActionPreviousField, []Context{ContextRequest}, []string{"shift+tab"}},
+		{ActionNextField, []Context{ContextRequest}, []string{"tab"}},
+		{ActionSubmit, []Context{ContextRequest}, []string{"ctrl+enter", "alt+enter"}},
+	}
+
+	registry := DefaultRegistry()
+	for _, tt := range tests {
+		tt := tt
+		t.Run(string(tt.id), func(t *testing.T) {
+			t.Parallel()
+
+			action, ok := registry.Action(tt.id)
+			if !ok {
+				t.Fatalf("missing action %q", tt.id)
+			}
+			if !slices.Equal(action.Contexts, tt.contexts) {
+				t.Fatalf("contexts = %v, want %v", action.Contexts, tt.contexts)
+			}
+			if !slices.Equal(action.Keys, tt.keys) {
+				t.Fatalf("keys = %v, want %v", action.Keys, tt.keys)
+			}
+			if action.Description == "" {
+				t.Fatal("description must not be empty")
+			}
+			if action.Priority <= 0 {
+				t.Fatalf("priority = %d, want positive value", action.Priority)
+			}
+		})
+	}
+}
+
+func TestDefaultRegistryReservesEditingKeys(t *testing.T) {
+	t.Parallel()
+
+	registry := DefaultRegistry()
+	for _, action := range registry.Actions() {
+		for _, key := range action.Keys {
+			if key == "up" || key == "down" || key == "left" || key == "right" {
+				t.Errorf("%s claims editor arrow key %q", action.ID, key)
+			}
+			if key == "tab" && action.ID != ActionNextField {
+				t.Errorf("%s claims tab; only next field may use it", action.ID)
+			}
+			if key == "shift+tab" && action.ID != ActionPreviousField {
+				t.Errorf("%s claims shift+tab; only previous field may use it", action.ID)
+			}
+			if key == "enter" && action.ID == ActionSubmit {
+				t.Error("submit must not claim plain enter")
+			}
+		}
+	}
+}
+
+func TestDefaultRegistryHasNoAmbiguousKeysWithinAContext(t *testing.T) {
+	t.Parallel()
+
+	registry := DefaultRegistry()
+	for _, context := range []Context{
+		ContextSidebar,
+		ContextRequest,
+		ContextResponse,
+		ContextHelp,
+	} {
+		owners := map[string]ActionID{}
+		for _, action := range registry.ActionsFor(context) {
+			for _, key := range action.Keys {
+				if previous, exists := owners[key]; exists {
+					t.Errorf("%s: key %q belongs to both %s and %s", context, key, previous, action.ID)
+				}
+				owners[key] = action.ID
+			}
+		}
+	}
+}
+
+func TestActionsForContextIncludesGlobalsAndSortsByPriority(t *testing.T) {
+	t.Parallel()
+
+	actions := DefaultRegistry().ActionsFor(ContextRequest)
+	if len(actions) == 0 {
+		t.Fatal("request context has no actions")
+	}
+
+	seenGlobalHelp := false
+	for i, action := range actions {
+		if action.ID == ActionGlobalHelp {
+			seenGlobalHelp = true
+		}
+		if i > 0 && actions[i-1].Priority < action.Priority {
+			t.Fatalf("actions are not sorted by descending priority: %v before %v", actions[i-1], action)
+		}
+	}
+	if !seenGlobalHelp {
+		t.Fatal("request actions must include globally available help")
+	}
+}
