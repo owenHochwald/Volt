@@ -12,12 +12,14 @@ type KeyMap struct {
 	Quit          key.Binding
 	GlobalHelp    key.Binding
 	ContextHelp   key.Binding
+	PanelCommand  key.Binding
 	PreviousPanel key.Binding
 	NextPanel     key.Binding
 
 	// Sidebar
 	LoadRequest   key.Binding
 	DeleteRequest key.Binding
+	NavCount      key.Binding
 	NavUp         key.Binding
 	NavDown       key.Binding
 	NavFirst      key.Binding
@@ -25,6 +27,7 @@ type KeyMap struct {
 
 	// Request pane
 	SendRequest      key.Binding
+	ActivateControl  key.Binding
 	SaveRequest      key.Binding
 	ToggleLoadTest   key.Binding
 	NextField        key.Binding
@@ -59,15 +62,18 @@ func DefaultKeyMap() KeyMap {
 		Quit:             registry.MustBinding(ActionQuit),
 		GlobalHelp:       registry.MustBinding(ActionGlobalHelp),
 		ContextHelp:      registry.MustBinding(ActionContextHelp),
+		PanelCommand:     registry.MustBinding(ActionPanelCommand),
 		PreviousPanel:    registry.MustBinding(ActionPreviousPanel),
 		NextPanel:        registry.MustBinding(ActionNextPanel),
 		LoadRequest:      registry.MustBinding(ActionLoadRequest),
 		DeleteRequest:    registry.MustBinding(ActionDeleteRequest),
+		NavCount:         registry.MustBinding(ActionNavigationCount),
 		NavUp:            registry.MustBinding(ActionNavigateUp),
 		NavDown:          registry.MustBinding(ActionNavigateDown),
 		NavFirst:         registry.MustBinding(ActionNavigateFirst),
 		NavLast:          registry.MustBinding(ActionNavigateLast),
 		SendRequest:      registry.MustBinding(ActionSubmit),
+		ActivateControl:  registry.MustBinding(ActionActivateControl),
 		SaveRequest:      registry.MustBinding(ActionSaveRequest),
 		ToggleLoadTest:   registry.MustBinding(ActionToggleLoadTest),
 		NextField:        registry.MustBinding(ActionNextField),
