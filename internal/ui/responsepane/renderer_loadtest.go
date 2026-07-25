@@ -135,9 +135,9 @@ func (m ResponsePane) renderLoadTestErrors() string {
 		return b.String()
 	}
 
-	// Render each error code with styling
-	for code, count := range stats.Errors {
-		b.WriteString(responseKeyStyle.Render(fmt.Sprintf("HTTP %s", code)))
+	// Render each stable error class.
+	for class, count := range stats.Errors {
+		b.WriteString(responseKeyStyle.Render(class))
 		b.WriteString(": ")
 		b.WriteString(responseValueStyle.Render(fmt.Sprintf("%d occurrences", count)))
 		b.WriteString("\n\n")
