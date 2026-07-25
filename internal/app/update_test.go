@@ -175,6 +175,62 @@ func TestPanelNavigationBlursRequestControl(t *testing.T) {
 	}
 }
 
+func TestPanelNavigationKeySequences(t *testing.T) {
+	tests := []struct {
+		name  string
+		start utils.Panel
+		keys  []tea.KeyPressMsg
+		want  utils.Panel
+	}{
+		{
+			name:  "vim next panel",
+			start: utils.SidebarPanel,
+			keys: []tea.KeyPressMsg{
+				appKeyPress('w', "", tea.ModCtrl),
+				appKeyPress('l', "l", 0),
+			},
+			want: utils.RequestPanel,
+		},
+		{
+			name:  "vim previous panel wraps",
+			start: utils.SidebarPanel,
+			keys: []tea.KeyPressMsg{
+				appKeyPress('w', "", tea.ModCtrl),
+				appKeyPress('h', "h", 0),
+			},
+			want: utils.ResponsePanel,
+		},
+		{
+			name:  "alt next panel remains an alias",
+			start: utils.SidebarPanel,
+			keys:  []tea.KeyPressMsg{appKeyPress('l', "", tea.ModAlt)},
+			want:  utils.RequestPanel,
+		},
+		{
+			name:  "alt previous panel remains an alias",
+			start: utils.SidebarPanel,
+			keys:  []tea.KeyPressMsg{appKeyPress('h', "", tea.ModAlt)},
+			want:  utils.ResponsePanel,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			model := newTestModel(t)
+			model.setFocusedPanel(tt.start)
+
+			for _, key := range tt.keys {
+				updated, _ := model.Update(key)
+				model = updated.(Model)
+			}
+
+			if model.focusedPanel != tt.want {
+				t.Fatalf("focused panel = %d, want %d", model.focusedPanel, tt.want)
+			}
+		})
+	}
+}
+
 func newTestModel(t *testing.T) Model {
 	t.Helper()
 
