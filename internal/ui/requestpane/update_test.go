@@ -2,10 +2,12 @@ package requestpane
 
 import (
 	"path/filepath"
+	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/owenHochwald/Volt/internal/storage"
+	"github.com/owenHochwald/Volt/internal/ui"
 	"github.com/owenHochwald/Volt/internal/ui/keybindings"
 )
 
@@ -87,6 +89,53 @@ func TestSetFocusedBlursAndRestoresCurrentControl(t *testing.T) {
 	pane.SetFocused(true)
 	if !pane.URLInput.Focused() {
 		t.Fatal("URL input focus was not restored on panel entry")
+	}
+}
+
+func TestInvalidHeadersBlockSubmissionAndSurfaceError(t *testing.T) {
+	pane := newTestRequestPane(t)
+	pane.SetFocused(true)
+	pane.URLInput.SetValue("https://example.com")
+	pane.Headers.SetValue("missing delimiter")
+
+	updated, cmd := pane.Update(keyPress(tea.KeyEnter, "", tea.ModCtrl))
+
+	if updated.RequestInProgress {
+		t.Fatal("invalid headers started a request")
+	}
+	if cmd == nil {
+		t.Fatal("invalid headers did not produce a notification")
+	}
+	msg, ok := cmd().(ui.NotificationMsg)
+	if !ok {
+		t.Fatalf("message type = %T, want ui.NotificationMsg", cmd())
+	}
+	if !strings.Contains(strings.ToLower(msg.Notification.Text), "header") {
+		t.Fatalf("notification = %q, want header error", msg.Notification.Text)
+	}
+}
+
+func TestInvalidLoadTestConfigBlocksStartAndSurfacesError(t *testing.T) {
+	pane := newTestRequestPane(t)
+	pane.SetFocused(true)
+	pane.toggleLoadTestMode()
+	pane.URLInput.SetValue("https://example.com")
+	pane.LoadTestConcurrency.SetValue("not-a-number")
+
+	updated, cmd := pane.Update(keyPress(tea.KeyEnter, "", tea.ModCtrl))
+
+	if updated.RequestInProgress {
+		t.Fatal("invalid load-test config remained in progress")
+	}
+	if cmd == nil {
+		t.Fatal("invalid load-test config did not produce a notification")
+	}
+	msg, ok := cmd().(ui.NotificationMsg)
+	if !ok {
+		t.Fatalf("message type = %T, want ui.NotificationMsg", cmd())
+	}
+	if !strings.Contains(strings.ToLower(msg.Notification.Text), "concurrency") {
+		t.Fatalf("notification = %q, want concurrency error", msg.Notification.Text)
 	}
 }
 

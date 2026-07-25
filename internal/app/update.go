@@ -2,11 +2,13 @@ package app
 
 import (
 	"context"
+	"fmt"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/owenHochwald/Volt/internal/http"
 	"github.com/owenHochwald/Volt/internal/ui"
 	"github.com/owenHochwald/Volt/internal/ui/keybindings"
+	"github.com/owenHochwald/Volt/internal/ui/responsepane"
 	"github.com/owenHochwald/Volt/internal/ui/shortcutpane"
 	"github.com/owenHochwald/Volt/internal/utils"
 )
@@ -17,6 +19,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		if keybindings.Matches(msg, m.keys.ForceQuit) {
+			if m.loadTestCancel != nil {
+				m.loadTestCancel()
+			}
 			return m, tea.Quit
 		}
 
@@ -47,8 +52,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.movePanel(1)
 			return m, nil
 		}
+		if keybindings.Matches(msg, m.keys.CancelLoadTest) && m.loadTestCancel != nil {
+			m.loadTestCanceled = true
+			m.loadTestCancel()
+			m.notification = ui.Notification{Level: ui.NotificationWarning, Text: "Canceling load test…"}
+			return m, nil
+		}
 		if keybindings.Matches(msg, m.keys.Quit) &&
 			(m.focusedPanel == utils.SidebarPanel || m.focusedPanel == utils.ResponsePanel) {
+			if m.loadTestCancel != nil {
+				m.loadTestCancel()
+			}
 			return m, tea.Quit
 		}
 		if keybindings.Matches(msg, m.keys.EscapePanel) {
@@ -73,37 +87,68 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.requestPane.ResultMsgCleanup()
 		m.responsePane.SetResponse(msg.Response)
 		m.setFocusedPanel(utils.ResponsePanel)
+		switch {
+		case msg.Response == nil:
+			m.notification = ui.Notification{Level: ui.NotificationError, Text: "Request failed: empty response"}
+		case msg.Response.Error != "":
+			m.notification = ui.Notification{Level: ui.NotificationError, Text: "Request failed: " + msg.Response.Error}
+		case msg.Response.StatusCode >= 400:
+			m.notification = ui.Notification{Level: ui.NotificationError, Text: "Request completed with " + msg.Response.Status}
+		default:
+			m.notification = ui.Notification{Level: ui.NotificationSuccess, Text: "Request completed with " + msg.Response.Status}
+		}
 		return m, nil
 
 	case ui.RequestSavedMsg:
 		if msg.Err != nil {
+			m.notification = ui.Notification{Level: ui.NotificationError, Text: "Save failed: " + msg.Err.Error()}
 			return m, nil
 		}
+		m.notification = ui.Notification{Level: ui.NotificationSuccess, Text: "Request saved"}
 		return m, ui.LoadRequestsCmd(m.db)
 
 	case ui.RequestDeletedMsg:
 		if msg.Err != nil {
+			m.notification = ui.Notification{Level: ui.NotificationError, Text: "Delete failed: " + msg.Err.Error()}
 			return m, nil
 		}
+		m.notification = ui.Notification{Level: ui.NotificationSuccess, Text: "Request deleted"}
 		return m, ui.LoadRequestsCmd(m.db)
 
 	case ui.RequestsLoadingMsg:
 		if msg.Err != nil {
+			m.notification = ui.Notification{Level: ui.NotificationError, Text: "Loading requests failed: " + msg.Err.Error()}
 			return m, nil
 		}
 		m.sidebarPane, cmd = m.sidebarPane.Update(msg)
 		return m, cmd
 
+	case ui.NotificationMsg:
+		m.notification = msg.Notification
+		return m, nil
+
+	case responsepane.ResponseCopiedMsg:
+		if msg.Err != nil {
+			m.notification = ui.Notification{Level: ui.NotificationError, Text: "Copy failed: " + msg.Err.Error()}
+		} else {
+			m.notification = ui.Notification{Level: ui.NotificationSuccess, Text: "Response copied"}
+		}
+		return m, nil
+
 	case http.LoadTestStartMsg:
 		updates := make(chan *http.LoadTestStats, 100)
 		m.loadTestUpdates = updates
+		runContext, cancel := context.WithCancel(context.Background())
+		m.loadTestCancel = cancel
+		m.loadTestCanceled = false
 
-		// start load test in background
 		go func() {
-			msg.Config.Run(context.Background(), updates)
+			msg.Config.Run(runContext, updates)
 		}()
 
-		m.responsePane.ClearLoadTestStats()
+		m.responsePane.SetLoadTestPending(msg.Config.TotalRequests)
+		m.notification = ui.Notification{Level: ui.NotificationInfo, Text: "Load test started"}
+		m.setFocusedPanel(utils.ResponsePanel)
 		return m, ui.WaitForLoadTestUpdatesCmd(updates, msg.Config.TotalRequests)
 
 	case http.LoadTestStatsMsg:
@@ -115,19 +160,52 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case http.LoadTestCompleteMsg:
-		// final update
 		m.loadTestUpdates = nil
+		m.loadTestCancel = nil
 		if msg.Stats != nil {
 			m.responsePane.SetLoadTestStats(msg.Stats)
 		}
 		m.requestPane.ExitLoadTestMode()
 		m.setFocusedPanel(utils.ResponsePanel)
+		switch {
+		case m.loadTestCanceled:
+			completed := 0
+			if msg.Stats != nil {
+				completed = msg.Stats.CompletedRequests
+			}
+			m.notification = ui.Notification{
+				Level: ui.NotificationWarning,
+				Text:  fmt.Sprintf("Load test canceled after %d requests", completed),
+			}
+		case msg.Stats == nil:
+			m.notification = ui.Notification{Level: ui.NotificationError, Text: "Load test ended without final statistics"}
+		case msg.Stats.FailedRequests > 0:
+			m.notification = ui.Notification{
+				Level: ui.NotificationError,
+				Text:  fmt.Sprintf("Load test complete: %d failed requests", msg.Stats.FailedRequests),
+			}
+		default:
+			m.notification = ui.Notification{
+				Level: ui.NotificationSuccess,
+				Text:  fmt.Sprintf("Load test complete: %d requests", msg.Stats.CompletedRequests),
+			}
+		}
+		m.loadTestCanceled = false
 		return m, nil
 
 	case http.LoadTestErrorMsg:
 		m.loadTestUpdates = nil
+		if m.loadTestCancel != nil {
+			m.loadTestCancel()
+			m.loadTestCancel = nil
+		}
 		m.requestPane.ExitLoadTestMode()
-		// TODO: Display error message
+		m.setFocusedPanel(utils.ResponsePanel)
+		errorText := "unknown error"
+		if msg.Error != nil {
+			errorText = msg.Error.Error()
+		}
+		m.notification = ui.Notification{Level: ui.NotificationError, Text: "Load test failed: " + errorText}
 		return m, nil
 
 	case tea.WindowSizeMsg:

@@ -66,7 +66,7 @@ func (m Model) wideView(layout terminalLayout, header string) string {
 
 	rightSide := lipgloss.JoinVertical(lipgloss.Left, request, response)
 	panels := lipgloss.JoinHorizontal(lipgloss.Top, sidebar, rightSide)
-	return lipgloss.JoinVertical(lipgloss.Left, header, panels)
+	return lipgloss.JoinVertical(lipgloss.Left, header, panels, m.statusView(layout.width))
 }
 
 func (m Model) focusedView(layout terminalLayout, header string) string {
@@ -84,7 +84,20 @@ func (m Model) focusedView(layout terminalLayout, header string) string {
 	default:
 		panel = renderPanel(ui.SidebarStyle, true, layout.width, layout.contentHeight, m.sidebarPane.View())
 	}
-	return lipgloss.JoinVertical(lipgloss.Left, header, tabs, panel)
+	return lipgloss.JoinVertical(lipgloss.Left, header, tabs, panel, m.statusView(layout.width))
+}
+
+func (m Model) statusView(width int) string {
+	if m.notification.Text != "" {
+		return m.notification.View(width)
+	}
+	help := m.keys.CompactHelp(m.focusedContext(), 5)
+	return lipgloss.NewStyle().
+		Foreground(lipgloss.Color("241")).
+		Width(width).
+		MaxWidth(width).
+		MaxHeight(1).
+		Render(" " + help)
 }
 
 func (m Model) headerView(layout terminalLayout) string {

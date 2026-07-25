@@ -61,6 +61,10 @@ func (m *ResponsePane) ClearLoadTestStats() {
 	m.isLoadTest = false
 }
 
+func (m *ResponsePane) SetLoadTestPending(totalRequests int) {
+	m.SetLoadTestStats(http.NewLoadTestStats(totalRequests))
+}
+
 // SetHeight sets the height of the response pane
 func (m *ResponsePane) SetHeight(height int) {
 	m.height = max(height, 1)

@@ -28,6 +28,7 @@ type terminalLayout struct {
 
 	headerHeight  int
 	tabBarHeight  int
+	statusHeight  int
 	contentHeight int
 
 	sidebarWidth   int
@@ -56,7 +57,8 @@ func calculateLayout(width, height int) terminalLayout {
 	if width >= wideTerminalWidth && height >= wideTerminalHeight {
 		layout.mode = layoutWide
 		layout.headerHeight = 8
-		layout.contentHeight = max(height-layout.headerHeight, 0)
+		layout.statusHeight = 1
+		layout.contentHeight = max(height-layout.headerHeight-layout.statusHeight, 0)
 		layout.sidebarWidth = clamp(width/4, 24, 34)
 		layout.mainWidth = max(width-layout.sidebarWidth, 0)
 		layout.requestHeight = max(layout.contentHeight*45/100, 1)
@@ -67,7 +69,8 @@ func calculateLayout(width, height int) terminalLayout {
 	layout.mode = layoutFocused
 	layout.headerHeight = 3
 	layout.tabBarHeight = 1
-	layout.contentHeight = max(height-layout.headerHeight-layout.tabBarHeight, 0)
+	layout.statusHeight = 1
+	layout.contentHeight = max(height-layout.headerHeight-layout.tabBarHeight-layout.statusHeight, 0)
 	layout.sidebarWidth = width
 	layout.mainWidth = width
 	layout.requestHeight = layout.contentHeight

@@ -45,8 +45,6 @@ func (m RequestPane) View() string {
 
 	// Render mode-specific content
 	var mainContent string
-	var helpText string
-
 	if m.LoadTestMode {
 		// Load test mode - add configuration fields
 		ltConcurrencyLabel := ui.LabelStyle.Render("Concurrency:    ")
@@ -81,8 +79,6 @@ func (m RequestPane) View() string {
 			"",
 			button,
 		)
-
-		helpText = ui.HelpStyle.Render("ctrl+l: exit load test mode • tab/↑/↓: navigate • ctrl+p: start load test")
 	} else {
 		// Normal mode
 		mainContent = lipgloss.JoinVertical(
@@ -95,11 +91,9 @@ func (m RequestPane) View() string {
 			"",
 			button,
 		)
-
-		helpText = ui.HelpStyle.Render("ctrl+l: load test mode • tab/↑/↓: navigate • ←/→ or h/l: change method • ctrl+p: send • enter/→: accept URL • ctrl+s: save")
 	}
 
-	usedHeight := lipgloss.Height(mainContent) + lipgloss.Height(stopwatchCount) + lipgloss.Height(helpText)
+	usedHeight := lipgloss.Height(mainContent) + lipgloss.Height(stopwatchCount)
 	spacing := lipgloss.NewStyle().Height(max(m.Height-usedHeight, 0)).Render("")
 
 	finalContent := lipgloss.JoinVertical(
@@ -107,7 +101,6 @@ func (m RequestPane) View() string {
 		mainContent,
 		spacing,
 		stopwatchCount,
-		helpText,
 	)
 
 	return finalContent

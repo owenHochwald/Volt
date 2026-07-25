@@ -80,7 +80,7 @@ func WaitForLoadTestUpdatesCmd(updates <-chan *http.LoadTestStats, totalRequests
 			}
 		}
 
-		if stats.CompletedRequests >= stats.TotalRequests {
+		if !stats.EndTime.IsZero() {
 			return http.LoadTestCompleteMsg{
 				Stats:    stats,
 				Duration: stats.EndTime.Sub(stats.StartTime),

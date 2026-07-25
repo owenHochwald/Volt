@@ -5,7 +5,6 @@ import (
 
 	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 	"github.com/owenHochwald/Volt/internal/http"
 	"github.com/owenHochwald/Volt/internal/storage"
 	"github.com/owenHochwald/Volt/internal/ui/keybindings"
@@ -140,13 +139,7 @@ func (s *SidebarPane) Update(msg tea.Msg) (*SidebarPane, tea.Cmd) {
 }
 
 func (s *SidebarPane) View() string {
-	helpText := HelpStyle.Render("Press ? for help")
-
-	return lipgloss.JoinVertical(
-		lipgloss.Left,
-		s.requestsList.View(),
-		helpText,
-	)
+	return s.requestsList.View()
 }
 
 func (s *SidebarPane) SelectedItem() (RequestItem, bool) {
@@ -161,7 +154,7 @@ func (s *SidebarPane) SelectedItem() (RequestItem, bool) {
 func (s *SidebarPane) SetSize(width, height int) {
 	s.width = max(width, 1)
 	s.height = max(height, 1)
-	s.requestsList.SetSize(s.width, max(s.height-2, 1))
+	s.requestsList.SetSize(s.width, s.height)
 }
 
 func NewSidebar(db *storage.SQLiteStorage, keys keybindings.KeyMap) *SidebarPane {

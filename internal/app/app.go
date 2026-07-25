@@ -1,6 +1,8 @@
 package app
 
 import (
+	"context"
+
 	tea "charm.land/bubbletea/v2"
 	"github.com/owenHochwald/Volt/internal/http"
 	"github.com/owenHochwald/Volt/internal/storage"
@@ -28,8 +30,11 @@ type Model struct {
 
 	width, height int
 
-	loadTestUpdates <-chan *http.LoadTestStats
-	showHelpModal   bool
+	loadTestUpdates  <-chan *http.LoadTestStats
+	loadTestCancel   context.CancelFunc
+	loadTestCanceled bool
+	showHelpModal    bool
+	notification     ui.Notification
 }
 
 func SetupModel(db *storage.SQLiteStorage) Model {

@@ -43,6 +43,7 @@ const (
 	ActionNextMethod      ActionID = "next_method"
 	ActionPreviousMethod  ActionID = "previous_method"
 	ActionCopyResponse    ActionID = "copy_response"
+	ActionCancelLoadTest  ActionID = "cancel_load_test"
 	ActionNextTab         ActionID = "next_tab"
 	ActionPreviousTab     ActionID = "previous_tab"
 	ActionDirectTab       ActionID = "direct_tab"
@@ -165,6 +166,7 @@ func DefaultRegistry() Registry {
 		{ActionPreviousMethod, []Context{ContextRequest}, []string{"h"}, "h", "previous method", 50},
 
 		{ActionCopyResponse, []Context{ContextResponse}, []string{"y"}, "y", "copy response", 70},
+		{ActionCancelLoadTest, []Context{ContextResponse}, []string{"ctrl+x"}, "ctrl+x", "cancel load test", 70},
 		{ActionPreviousTab, []Context{ContextResponse}, []string{"h"}, "h", "previous tab", 65},
 		{ActionNextTab, []Context{ContextResponse}, []string{"l"}, "l", "next tab", 65},
 		{ActionDirectTab, []Context{ContextResponse}, []string{"1", "2", "3"}, "1-3", "jump to tab", 60},

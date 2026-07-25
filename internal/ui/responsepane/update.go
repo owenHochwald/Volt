@@ -1,10 +1,16 @@
 package responsepane
 
 import (
+	"errors"
+
 	tea "charm.land/bubbletea/v2"
 	"github.com/atotto/clipboard"
 	"github.com/owenHochwald/Volt/internal/ui/keybindings"
 )
+
+type ResponseCopiedMsg struct {
+	Err error
+}
 
 // Update handles Bubble Tea messages and state transitions
 func (m *ResponsePane) Update(msg tea.Msg) (*ResponsePane, tea.Cmd) {
@@ -66,9 +72,15 @@ func (m *ResponsePane) Update(msg tea.Msg) (*ResponsePane, tea.Cmd) {
 
 // copyToClipboard copies content to the system clipboard
 func (m ResponsePane) copyToClipboard(content string) tea.Cmd {
+	return copyCommand(content, clipboard.WriteAll)
+}
+
+func copyCommand(content string, write func(string) error) tea.Cmd {
 	return func() tea.Msg {
-		clipboard.WriteAll(content)
-		return nil
+		if write == nil {
+			return ResponseCopiedMsg{Err: errors.New("clipboard writer is unavailable")}
+		}
+		return ResponseCopiedMsg{Err: write(content)}
 	}
 }
 

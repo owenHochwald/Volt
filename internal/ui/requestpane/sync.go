@@ -2,6 +2,7 @@ package requestpane
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -23,6 +24,16 @@ func (m *RequestPane) syncRequest() {
 	m.Request.Headers = headerMap
 	m.Request.Body = m.Body.Value()
 	m.ParseErrors = headerErrors
+}
+
+func (m *RequestPane) validateRequest() error {
+	if len(m.ParseErrors) > 0 {
+		return fmt.Errorf("invalid headers: %s", strings.Join(m.ParseErrors, "; "))
+	}
+	if err := m.Request.Validate(); err != nil {
+		return fmt.Errorf("invalid request: %w", err)
+	}
+	return nil
 }
 
 // buildJobConfig builds a load test job configuration from current input
@@ -72,8 +83,11 @@ func (m *RequestPane) buildJobConfig() (*http.JobConfig, error) {
 
 	m.ParseErrors = append(m.ParseErrors, parseErrors...)
 
-	if err := m.Request.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
+	if len(parseErrors) > 0 {
+		return nil, fmt.Errorf("invalid load test configuration: %s", strings.Join(parseErrors, "; "))
+	}
+	if err := m.validateRequest(); err != nil {
+		return nil, err
 	}
 
 	return &http.JobConfig{

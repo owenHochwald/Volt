@@ -1,12 +1,33 @@
 package keybindings
 
-import "charm.land/bubbles/v2/key"
+import (
+	"strings"
+
+	"charm.land/bubbles/v2/key"
+)
 
 // KeyGroup represents a category of keybindings for help display.
 type KeyGroup struct {
 	Name     string
 	Context  Context
 	Bindings []key.Binding
+}
+
+// CompactHelp returns a short registry-derived hint line for the status bar.
+func (km KeyMap) CompactHelp(context Context, limit int) string {
+	actions := append(
+		km.Registry.ActionsDeclaredFor(context),
+		km.Registry.ActionsDeclaredFor(ContextGlobal)...,
+	)
+	if limit > 0 && len(actions) > limit {
+		actions = actions[:limit]
+	}
+
+	parts := make([]string, 0, len(actions))
+	for _, action := range actions {
+		parts = append(parts, action.KeyHelp+" "+action.Description)
+	}
+	return strings.Join(parts, " • ")
 }
 
 // GetKeyGroups generates contextual help groups from the action registry.

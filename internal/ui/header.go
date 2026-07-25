@@ -28,7 +28,7 @@ func (h *Header) View() string {
 			lipgloss.Left,
 			HeaderLogoStyle.Render("⚡ VOLT"),
 			"  ",
-			HeaderHelpStyle.Render("F1 help • alt+h/alt+l panels • ctrl+c quit"),
+			HeaderHelpStyle.Render("Terminal-native HTTP client"),
 		)
 	}
 
@@ -41,7 +41,7 @@ func (h *Header) View() string {
 
 	logo := HeaderLogoStyle.Render(asciiArt)
 
-	help := HeaderHelpStyle.Render("v0.1 • F1 help • alt+h/alt+l panels • ctrl+c quit")
+	help := HeaderHelpStyle.Render("v0.1 • Terminal-native HTTP client")
 
 	return lipgloss.JoinHorizontal(lipgloss.Left, logo, "\t", help)
 }

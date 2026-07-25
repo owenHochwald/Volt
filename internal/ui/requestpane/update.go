@@ -30,6 +30,9 @@ func (m RequestPane) Update(msg tea.Msg) (RequestPane, tea.Cmd) {
 		}
 		if keybindings.Matches(msg, m.keys.SaveRequest) {
 			m.syncRequest()
+			if err := m.validateRequest(); err != nil {
+				return m, ui.NotifyCmd(ui.NotificationError, err.Error())
+			}
 			return m, ui.SaveRequestCmd(m.DB, m.Request)
 		}
 		if keybindings.Matches(msg, m.keys.NextField) {

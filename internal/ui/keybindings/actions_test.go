@@ -133,6 +133,7 @@ func TestDefaultKeyMapIsGeneratedFromRegistry(t *testing.T) {
 		{ActionPreviousField, keyMap.PrevField.Keys()},
 		{ActionNextField, keyMap.NextField.Keys()},
 		{ActionSubmit, keyMap.SendRequest.Keys()},
+		{ActionCancelLoadTest, keyMap.CancelLoadTest.Keys()},
 	}
 
 	for _, tt := range tests {

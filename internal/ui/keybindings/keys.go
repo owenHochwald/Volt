@@ -34,14 +34,15 @@ type KeyMap struct {
 	ChangeMethodPrev key.Binding
 
 	// Response pane
-	CopyResponse key.Binding
-	TabNavNext   key.Binding
-	TabNavPrev   key.Binding
-	DirectTab    key.Binding
-	ScrollUp     key.Binding
-	ScrollDown   key.Binding
-	PageUp       key.Binding
-	PageDown     key.Binding
+	CopyResponse   key.Binding
+	CancelLoadTest key.Binding
+	TabNavNext     key.Binding
+	TabNavPrev     key.Binding
+	DirectTab      key.Binding
+	ScrollUp       key.Binding
+	ScrollDown     key.Binding
+	PageUp         key.Binding
+	PageDown       key.Binding
 
 	// Help modal
 	CloseHelp     key.Binding
@@ -76,6 +77,7 @@ func DefaultKeyMap() KeyMap {
 		ChangeMethodNext: registry.MustBinding(ActionNextMethod),
 		ChangeMethodPrev: registry.MustBinding(ActionPreviousMethod),
 		CopyResponse:     registry.MustBinding(ActionCopyResponse),
+		CancelLoadTest:   registry.MustBinding(ActionCancelLoadTest),
 		TabNavNext:       registry.MustBinding(ActionNextTab),
 		TabNavPrev:       registry.MustBinding(ActionPreviousTab),
 		DirectTab:        registry.MustBinding(ActionDirectTab),

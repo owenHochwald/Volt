@@ -62,6 +62,10 @@ func (nm *NormalMode) handleSubmit(m *RequestPane, msg tea.KeyPressMsg) (*Reques
 		}
 
 		m.syncRequest()
+		if err := m.validateRequest(); err != nil {
+			m.RequestInProgress = false
+			return m, ui.NotifyCmd(ui.NotificationError, err.Error())
+		}
 		m.RequestInProgress = true
 
 		m.Stopwatch.Reset()
