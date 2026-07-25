@@ -183,22 +183,16 @@ func TestPanelNavigationKeySequences(t *testing.T) {
 		want  utils.Panel
 	}{
 		{
-			name:  "vim next panel",
+			name:  "control w moves to next panel",
 			start: utils.SidebarPanel,
-			keys: []tea.KeyPressMsg{
-				appKeyPress('w', "", tea.ModCtrl),
-				appKeyPress('l', "l", 0),
-			},
-			want: utils.RequestPanel,
+			keys:  []tea.KeyPressMsg{appKeyPress('w', "", tea.ModCtrl)},
+			want:  utils.RequestPanel,
 		},
 		{
-			name:  "vim previous panel wraps",
+			name:  "control e moves to previous panel and wraps",
 			start: utils.SidebarPanel,
-			keys: []tea.KeyPressMsg{
-				appKeyPress('w', "", tea.ModCtrl),
-				appKeyPress('h', "h", 0),
-			},
-			want: utils.ResponsePanel,
+			keys:  []tea.KeyPressMsg{appKeyPress('e', "", tea.ModCtrl)},
+			want:  utils.ResponsePanel,
 		},
 		{
 			name:  "mac option next panel with associated text",
